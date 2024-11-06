@@ -9,10 +9,10 @@ progetto hackers gen 2024/25, main repository
 
 ## partecipanti
 
-- [@Federico Navoni](navonifederico777@gmail.com)
-- [@Edoardo Biestro](https://www.github.com/octokatherine)
-- [@Alessandro Patti](https://www.github.com/octokatherine)
-- [@Ido Natan](https://www.github.com/octokatherine)
-- [@Giovanni Zanotti](https://www.github.com/octokatherine)
-- [@Riccardo Dilecce](https://www.github.com/octokatherine)
-- [@Francesco Jendoubi](https://www.github.com/octokatherine)
+- @Federico Navoni (navonifederico777@gmail.com)
+- @Edoardo Biestro (email)
+- @Alessandro Patti (email)
+- @Ido Natan (email)
+- @Giovanni Zanotti (email)
+- @Riccardo Dilecce (email)
+- @Francesco Jendoubi (email)
