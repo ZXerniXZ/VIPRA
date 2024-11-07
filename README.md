@@ -10,7 +10,7 @@ progetto hackers gen 2024/25, main repository
 ## partecipanti
 
 - @Federico Navoni (navonifederico777@gmail.com)
-- @Edoardo Biestro (email)
+- @Edoardo Biestro (edobi@outlook.it)
 - @Alessandro Patti (email)
 - @Ido Natan (email)
 - @Giovanni Zanotti (email)
