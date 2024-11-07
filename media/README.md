@@ -9,6 +9,6 @@
 apri questo [link](https://app.diagrams.net/)
 
 ```bash
-  open existing diagram > ZXerniXZ/hackersGenProject > media > file .drawio
+  use github > open existing diagram > ZXerniXZ/hackersGenProject > diagrams > file .drawio
 ```
 
