@@ -1,5 +1,5 @@
-# hackersGenProject
-progetto hackers gen 2024/25, main repository 
+# projectDayProject
+progetto x project day 2024/25, main repository 
 
 ## link utili
 
