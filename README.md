@@ -15,4 +15,4 @@ Progetto x project day 2024/25, main repository
 - @Alessandro Patti (alepatti07@gmail.com)
 - @Ido Natan (natanido9@gmail.com)
 - @Riccardo Dilecce (rikydileva@gmail.com)
-- @Francesco Jendoubi (email)
+- @Francesco Jendoubi (pesentifrancesco756@gmail.com)
