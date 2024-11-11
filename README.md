@@ -13,6 +13,5 @@ Progetto x project day 2024/25, main repository
 - @Edoardo Biestro (edobi@outlook.it)
 - @Alessandro Patti (alepatti07@gmail.com)
 - @Ido Natan (natanido9@gmail.com)
-- @Giovanni Zanotti (email)
 - @Riccardo Dilecce (rikydileva@gmail.com)
 - @Francesco Jendoubi (email)
