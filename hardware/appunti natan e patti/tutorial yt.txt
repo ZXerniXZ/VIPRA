@@ -9,3 +9,6 @@ https://youtu.be/scOqgQTHKho?si=rxv3W22smvh8kWPW
 
 Come installare un broker MQTT con Mosquitto
 https://www.youtube.com/watch?v=M4qW4qXvs80
+
+ESP32 Access Point and Router connection explained
+https://www.youtube.com/watch?v=PGt_5xQo2_0&t=306s
