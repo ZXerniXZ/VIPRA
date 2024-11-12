@@ -1,3 +1,8 @@
+How to setup MQTT for Raspberry Pi and ESP32 for IOT and Robotics projects
 https://youtu.be/ebsXSCKsHeQ?si=BhyK2hq0BRGKtnrl
+
+ESP32 as MQTT Broker | How to Setup Basic MQTT Broker in ESP32 using PicoMQTT Library
 https://youtu.be/tc8zKb6f3TU?si=GumP0HSFnimNSdhJ
+
+ESP32 as MQTT broker | PicoMQTT library | Secure & Cheap MQTT broker
 https://youtu.be/scOqgQTHKho?si=rxv3W22smvh8kWPW
