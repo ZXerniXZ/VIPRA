@@ -1,5 +1,5 @@
 
-// per link da guardare solo per informazione NON PRENDERE CODICI DA LI!
+// per video da guardare solo per informazione NON PRENDERE CODICI DA LI!
 
 
 How to setup MQTT for Raspberry Pi and ESP32 for IOT and Robotics projects
