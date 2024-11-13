@@ -24,7 +24,7 @@
 
 - [Come installare un broker MQTT con Mosquitto](https://www.youtube.com/watch?v=M4qW4qXvs80)
 
-- [ESP32 Access Point and Router connection explained](https://www.youtube.com/watch?v=PGt_5xQo2_0&t=306s)
+- // [ESP32 Access Point and Router connection explained](https://www.youtube.com/watch?v=PGt_5xQo2_0&t=306s)
 
 - [Upload WT32-ETH01 Board in Arduino IDE, and Testing Ethernet Connection](https://www.youtube.com/watch?v=0avosBsQpis)
 
