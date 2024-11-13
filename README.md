@@ -11,7 +11,7 @@ Progetto x project day 2024/25, main repository
 ## partecipanti
 
 - @Federico Navoni (navonifederico777@gmail.com)
-- @Edoardo Biestro (edobi@outlook.it)
+- @Edoardo Biestro (edoardobiestro@gmail.com)
 - @Alessandro Patti (alepatti07@gmail.com)
 - @Ido Natan (natanido9@gmail.com)
 - @Riccardo Dilecce (rikydileva@gmail.com)
