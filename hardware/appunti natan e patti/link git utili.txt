@@ -2,3 +2,4 @@ https://github.com/jiteshsaini/mqtt-demo.git
 https://fusion-automate.super.site/1138090ec617464884074d74a9561856
 https://github.com/HighVoltages/ESP32-as-MQTT-broker
 https://github.com/mlesniew/PicoMQTT
+https://github.com/AdamJHowell/WT32_ETH01_MQTT
