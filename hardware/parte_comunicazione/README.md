@@ -1,4 +1,4 @@
-## - LINK REPOSITORY UTILI  -[LINK AL FILE](https://github.com/ZXerniXZ/projectDayProject/blob/4ad7815440818151d80d103d88f2b90b799461cc/hardware/parte_comunicazione/appunti%20natan%20e%20patti/link%20git%20utili.txt)
+## - LINK REPOSITORY UTILI  - [LINK AL FILE](https://github.com/ZXerniXZ/projectDayProject/blob/4ad7815440818151d80d103d88f2b90b799461cc/hardware/parte_comunicazione/appunti%20natan%20e%20patti/link%20git%20utili.txt)
 
 - https://github.com/jiteshsaini/mqtt-demo.git
 
@@ -12,15 +12,15 @@
 
 - https://github.com/vortex314/serial2mqtt?tab=readme-ov-file
 
-## - TUTORIAL YOUTUBE UTILI  -[LINK AL FILE](https://github.com/ZXerniXZ/projectDayProject/blob/f2e7a25d4cad8cc7b38e4d52b83f1d9375fba28a/hardware/parte_comunicazione/appunti%20natan%20e%20patti/tutorial%20yt.txt)
+## - TUTORIAL YOUTUBE UTILI  - [LINK AL FILE](https://github.com/ZXerniXZ/projectDayProject/blob/f2e7a25d4cad8cc7b38e4d52b83f1d9375fba28a/hardware/parte_comunicazione/appunti%20natan%20e%20patti/tutorial%20yt.txt)
 
 // per video da guardare solo per informazione NON PRENDERE CODICI DA LI!
 
 - [How to setup MQTT for Raspberry Pi and ESP32 for IOT and Robotics projects](https://youtu.be/ebsXSCKsHeQ?si=BhyK2hq0BRGKtnrl)
 
-- //[ESP32 as MQTT Broker | How to Setup Basic MQTT Broker in ESP32 using PicoMQTT Library](https://youtu.be/tc8zKb6f3TU?si=GumP0HSFnimNSdhJ)
+- // [ESP32 as MQTT Broker | How to Setup Basic MQTT Broker in ESP32 using PicoMQTT Library](https://youtu.be/tc8zKb6f3TU?si=GumP0HSFnimNSdhJ)
  
-- //[ESP32 as MQTT broker | PicoMQTT library | Secure & Cheap MQTT broker](https://youtu.be/scOqgQTHKho?si=rxv3W22smvh8kWPW)
+- // [ESP32 as MQTT broker | PicoMQTT library | Secure & Cheap MQTT broker](https://youtu.be/scOqgQTHKho?si=rxv3W22smvh8kWPW)
 
 - [Come installare un broker MQTT con Mosquitto](https://www.youtube.com/watch?v=M4qW4qXvs80)
 
