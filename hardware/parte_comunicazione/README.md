@@ -45,3 +45,8 @@ https://www.youtube.com/watch?v=0avosBsQpis
 Easy MQTT Server Setup
 
 https://www.youtube.com/watch?v=OOqS8fhd6ck
+
+## PIN ESP32
+
+![alt text](https://github.com/[username]/[reponame]/blob/[branch]/image.jpg?raw=true)
+
