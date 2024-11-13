@@ -13,7 +13,7 @@ https://github.com/AdamJHowell/WT32_ETH01_MQTT
 
 https://github.com/vortex314/serial2mqtt?tab=readme-ov-file
 
-## [TUTORIAL YOUTUBE UTILI](https://github.com/ZXerniXZ/projectDayProject/blob/f2e7a25d4cad8cc7b38e4d52b83f1d9375fba28a/hardware/parte_comunicazione/appunti%20natan%20e%20patti/tutorial%20yt.txt)
+## - [TUTORIAL YOUTUBE UTILI](https://github.com/ZXerniXZ/projectDayProject/blob/f2e7a25d4cad8cc7b38e4d52b83f1d9375fba28a/hardware/parte_comunicazione/appunti%20natan%20e%20patti/tutorial%20yt.txt)
 
 // per video da guardare solo per informazione NON PRENDERE CODICI DA LI!
 
