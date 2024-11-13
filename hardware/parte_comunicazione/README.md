@@ -48,5 +48,5 @@ https://www.youtube.com/watch?v=OOqS8fhd6ck
 
 ## PIN ESP32
 
-![alt text](https://github.com/[username]/[reponame]/blob/[branch]/image.jpg?raw=true)
+![alt text](https://github.com/ZXerniXZ/projectDayProject/blob/a8bfcfb1ef20cd3322cd1562ea8731920c4bb927/hardware/Pin%20esp32.jpg?raw=true)
 
