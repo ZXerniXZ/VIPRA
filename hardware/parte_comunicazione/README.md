@@ -17,7 +17,6 @@ https://github.com/vortex314/serial2mqtt?tab=readme-ov-file
 
 // per video da guardare solo per informazione NON PRENDERE CODICI DA LI!
 
-
 How to setup MQTT for Raspberry Pi and ESP32 for IOT and Robotics projects
 
 https://youtu.be/ebsXSCKsHeQ?si=BhyK2hq0BRGKtnrl
@@ -27,27 +26,21 @@ https://youtu.be/ebsXSCKsHeQ?si=BhyK2hq0BRGKtnrl
 
 //      https://youtu.be/tc8zKb6f3TU?si=GumP0HSFnimNSdhJ
 
-
-
 //      ESP32 as MQTT broker | PicoMQTT library | Secure & Cheap MQTT broker
 
 //      https://youtu.be/scOqgQTHKho?si=rxv3W22smvh8kWPW
-
 
 Come installare un broker MQTT con Mosquitto
 
 https://www.youtube.com/watch?v=M4qW4qXvs80
 
-
 ESP32 Access Point and Router connection explained
 
 https://www.youtube.com/watch?v=PGt_5xQo2_0&t=306s
 
-
 Upload WT32-ETH01 Board in Arduino IDE, and Testing Ethernet Connection
 
 https://www.youtube.com/watch?v=0avosBsQpis
-
 
 Easy MQTT Server Setup
 
