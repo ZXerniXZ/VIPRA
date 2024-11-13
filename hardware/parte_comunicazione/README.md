@@ -19,7 +19,6 @@ https://github.com/vortex314/serial2mqtt?tab=readme-ov-file
 
 
 How to setup MQTT for Raspberry Pi and ESP32 for IOT and Robotics projects
-
 https://youtu.be/ebsXSCKsHeQ?si=BhyK2hq0BRGKtnrl
 
 //      ESP32 as MQTT Broker | How to Setup Basic MQTT Broker in ESP32 using PicoMQTT Library
