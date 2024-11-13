@@ -19,3 +19,6 @@ https://www.youtube.com/watch?v=PGt_5xQo2_0&t=306s
 
 Upload WT32-ETH01 Board in Arduino IDE, and Testing Ethernet Connection
 https://www.youtube.com/watch?v=0avosBsQpis
+
+Easy MQTT Server Setup
+https://www.youtube.com/watch?v=OOqS8fhd6ck
