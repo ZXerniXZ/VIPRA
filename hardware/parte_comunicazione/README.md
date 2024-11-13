@@ -1,4 +1,4 @@
-## - [LINK REPOSITORY UTILI](https://github.com/ZXerniXZ/projectDayProject/blob/4ad7815440818151d80d103d88f2b90b799461cc/hardware/parte_comunicazione/appunti%20natan%20e%20patti/link%20git%20utili.txt)
+## - LINK REPOSITORY UTILI [LINK AL FILE](https://github.com/ZXerniXZ/projectDayProject/blob/4ad7815440818151d80d103d88f2b90b799461cc/hardware/parte_comunicazione/appunti%20natan%20e%20patti/link%20git%20utili.txt)
 
 - https://github.com/jiteshsaini/mqtt-demo.git
 
