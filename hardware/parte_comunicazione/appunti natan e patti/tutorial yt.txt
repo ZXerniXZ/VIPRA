@@ -24,3 +24,5 @@ Easy MQTT Server Setup
 https://www.youtube.com/watch?v=OOqS8fhd6ck
 
 https://github.com/Xinyuan-LilyGO/TTGO-T-Display/issues/47
+
+https://www.youtube.com/watch?v=YhUUxIobhn8
