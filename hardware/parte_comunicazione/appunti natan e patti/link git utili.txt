@@ -4,3 +4,4 @@ https://github.com/HighVoltages/ESP32-as-MQTT-broker
 https://github.com/mlesniew/PicoMQTT
 https://github.com/AdamJHowell/WT32_ETH01_MQTT
 https://github.com/vortex314/serial2mqtt?tab=readme-ov-file
+https://github.com/OLIMEX/ESP32-POE/tree/4054ce5d80dcf66261ed52aa4d99f8d5f8ca1f5c/SOFTWARE/ARDUINO
