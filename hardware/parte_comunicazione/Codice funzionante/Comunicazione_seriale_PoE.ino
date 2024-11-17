@@ -5,15 +5,20 @@
 #define TXp1 4
 
 void setup() {
-
-  Serial0.begin(9600, SERIAL_8N1, RXp0, TXp0);
-  Serial1.begin(9600, SERIAL_8N1, RXp1, TXp1);
-  
-  
+  Serial.begin(9600);
+  Serial1.begin(19200, SERIAL_8N1, RXp0, TXp0);
+  Serial2.begin(19200, SERIAL_8N1, RXp1, TXp1); 
 }
+
 void loop() {
 
-  Serial1.print("SCHEDA DI MEZZO:"+Serial0.readString());
-  delay(2000);
+  if (Serial1.available() > 0){
+
+    String messaggio=Serial1.readString();
+
+    Serial2.print(messaggio);
+    Serial.print(messaggio);
+
+  }
   
 }
