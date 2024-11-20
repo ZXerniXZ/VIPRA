@@ -1,19 +1,25 @@
-#define RXp0 23
-#define TXp0 22
+#define RXp1 23
+#define TXp1 22
 
 void setup() {
 
-  Serial.begin(9600);
-  Serial1.begin(19200, SERIAL_8N1, RXp0, TXp0);
+  Serial.setTimeout(0);  
+  Serial1.setTimeout(0);
+
+  Serial.begin(38400);
+  Serial1.begin(115200, SERIAL_8N1, RXp1, TXp1);
   
 }
+
+  int contatore=0;
+
 void loop() {
 
-  for(int i=0;i<100;i++){
-  
-  String messaggio="SCHEDA IN:";
-  Serial.println(messaggio+i);
-  Serial1.println(messaggio+i);
-  delay(3000);
-  }
+    String messaggio="Messaggio n:";
+
+    Serial.println(messaggio+contatore);
+    Serial1.println(messaggio+contatore);
+    contatore++;
+    delay(3000);
+
 }
