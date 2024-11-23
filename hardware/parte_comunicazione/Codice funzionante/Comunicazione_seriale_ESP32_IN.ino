@@ -1,4 +1,4 @@
-#define RXp1 23
+//#define RXp1 23
 #define TXp1 22
 
 void setup() {
@@ -7,7 +7,7 @@ void setup() {
   Serial1.setTimeout(0);
 
   Serial.begin(38400);
-  Serial1.begin(115200, SERIAL_8N1, RXp1, TXp1);
+  Serial1.begin(115200, SERIAL_8N1, -1, TXp1);
   
 }
 
