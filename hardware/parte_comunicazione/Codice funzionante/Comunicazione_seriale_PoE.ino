@@ -17,9 +17,9 @@ void setup() {
 
 void loop() {
 
-    String messaggio=Serial1.readString();
-    
-    Serial2.print(messaggio);
-    Serial.print(messaggio);
+  String messaggio = Serial1.readString();
+  
+  Serial2.print(messaggio);
+  Serial.print(messaggio);
     
 }

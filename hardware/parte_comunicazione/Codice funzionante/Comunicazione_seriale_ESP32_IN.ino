@@ -15,11 +15,19 @@ void setup() {
 
 void loop() {
 
-    String messaggio="Messaggio n:";
 
-    Serial.println(messaggio+contatore);
-    Serial1.println(messaggio+contatore);
-    contatore++;
-    delay(3000);
+  String messaggio="Messaggio n:";
+
+  messaggio = Serial.readString();
+
+  messaggio.trim();
+
+  if(messaggio.length()>=1){
+  Serial.println(messaggio);
+  Serial1.println(messaggio);
+  }
+
+  contatore++;
+  delay(3000);
 
 }
