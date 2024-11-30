@@ -28,6 +28,6 @@ void loop() {
   }
 
   contatore++;
-  delay(3000);
+  //delay(3000);
 
 }
