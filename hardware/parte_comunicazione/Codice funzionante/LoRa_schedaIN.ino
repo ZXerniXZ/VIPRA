@@ -22,6 +22,32 @@ void setup() {
 
 }
 
+void loraSendString(String messaggio){
+  LoRa.beginPacket();
+  LoRa.print(messaggio);
+  LoRa.endPacket();
+}
+
+String loraReceiveStringSerial(){
+  String messaggio = Serial.readString();
+  messaggio.trim();
+  if(messaggio.length()>=1){
+    return messaggio;
+  }else{
+    return "";
+  }
+}
+
+String loraReceiveStringLoRa(){
+  String messaggio = LoRa.readString();
+  messaggio.trim();
+  if(messaggio.length()>=1){
+    return messaggio;
+  }else{
+    return "";
+  }
+}
+
 String const machine_code = "12345678ABC";
 String messaggio;
 String conferma;
@@ -35,23 +61,18 @@ void loop() {
 
   do{
 
-    messaggio = "Invio pacchetto n";
-
-    messaggio = Serial.readString();
-    messaggio.trim();
+    //messaggio = "Invio pacchetto n";
+    messaggio = loraReceiveStringSerial();
 
   }while(messaggio.length()<1);
 
-  LoRa.beginPacket();
-  LoRa.print(machine_code);
-  LoRa.endPacket();
+  loraSendString(machine_code);
   Serial.println("Machine code inviato");
 
   do{
 
     if(LoRa.parsePacket()){
-      conferma = LoRa.readString();
-      conferma.trim();
+      conferma = loraReceiveStringLoRa();
     }
 
     if (conferma == "true"){
@@ -69,10 +90,9 @@ void loop() {
   if(responso){
 
     Serial.println("Responso positivo ottenuto");
-    LoRa.beginPacket();
     //messaggio = "Pacchetto n";
-    LoRa.print(messaggio);
-    LoRa.endPacket();
+    loraSendString(messaggio);
+
     Serial.print("Messaggio inviato: ");
     Serial.println(messaggio);
 

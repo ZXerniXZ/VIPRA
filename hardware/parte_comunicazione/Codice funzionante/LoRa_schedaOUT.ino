@@ -22,6 +22,33 @@ void setup() {
   Serial.println("LoRa inizializzato con successo!");
 }
 
+void loraSendString(String messaggio){
+  LoRa.beginPacket();
+  LoRa.print(messaggio);
+  LoRa.endPacket();
+}
+
+String loraReceiveStringSerial(){
+  String messaggio = Serial.readString();
+  messaggio.trim();
+  if(messaggio.length()>=1){
+    return messaggio;
+  }else{
+    return "";
+  }
+}
+
+String loraReceiveStringLoRa(){
+  String messaggio = LoRa.readString();
+  messaggio.trim();
+  if(messaggio.length()>=1){
+    return messaggio;
+  }else{
+    return "";
+  }
+}
+
+
 std::regex pattern("^[0-9]{8}[A-Z]{3}$");
 
 String const machine_code = "12345677ABC";
@@ -33,9 +60,7 @@ void loop() {
        
     Serial.print("Ricevuto pacchetto: ");
 
-    String messaggio = LoRa.readString();
-
-    messaggio.trim();
+    String messaggio = loraReceiveStringLoRa();
 
     if(messaggio.length()>=1){
 
@@ -44,14 +69,10 @@ void loop() {
         Serial.println("Machine code riconosciuto");
         if (messaggio==machine_code){
           Serial.println("Codice macchina uguale riconosciuto, deviazione pacchetto");
-          LoRa.beginPacket();
-          LoRa.println("false");
-          LoRa.endPacket();
+          loraSendString("false");
         }else{
           Serial.println("Codice macchina idoneo");
-          LoRa.beginPacket();
-          LoRa.println("true");
-          LoRa.endPacket();
+          loraSendString("true");
         }
       }
       else{
