@@ -36,4 +36,4 @@
 
 ## ESP32-PoE-ISO
 
-![alt text](https://github.com/ZXerniXZ/projectDayProject/blob/5dafd472cae145c5c610d4bfd528bcbaa73c3200/hardware/ESP32-POE-GPIO%20pin.png)
+![alt text](https://github.com/ZXerniXZ/projectDayProject/blob/1ae4fbc1a59daee72ffb16ed00dddbe3c39e25ab/hardware/ESP32-POE-ISO%20pin.png)
