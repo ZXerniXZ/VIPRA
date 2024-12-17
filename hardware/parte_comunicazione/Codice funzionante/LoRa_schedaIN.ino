@@ -64,6 +64,8 @@ void loop() {
     //messaggio = "Invio pacchetto n";
     messaggio = loraReceiveStringSerial();
 
+    //aggiungere delay di sovraccarico
+
   }while(messaggio.length()<1);
 
   loraSendString(machine_code);
@@ -101,5 +103,12 @@ void loop() {
   }else{
     Serial.println("Responso negativo ottenuto");
   }
+
+  //aggiungere delay di sovraccarico
+
+
+  ///   RICEVERE UNA STRINGA DOVE I PRIMI CARATTERI SONO IL CODICE MACCHINA, E IL RESTO IL MESSAGGIO
+  ///   RICEVERE IN SERIALE DALLA NVIDIA IL CODICE MACCHINA
+  //    RIMUOVERE SCAMBIO ACK MA MANTENERE IL CONTROLLO (DEVIAZIONE PACCHETTO)
 
 }

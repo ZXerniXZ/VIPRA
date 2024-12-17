@@ -16,4 +16,7 @@ void loop() {
 
   Serial.print(messaggio);
   
+  //aggiungere delay di sovraccarico
+
+  ///   RICEVI DATI DA POE E INVIA IN LORA AD ALTRE MACCHINE
 }

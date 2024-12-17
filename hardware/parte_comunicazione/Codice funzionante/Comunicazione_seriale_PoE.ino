@@ -21,5 +21,10 @@ void loop() {
   
   Serial2.print(messaggio);
   Serial.print(messaggio);
+
+  //aggiungere delay di sovraccarico
+
+  ///   RICEVI DATI DA IN E MANDA SU SERVER MQTT
+  ///   PRENDI DATI DA SERVER (NVDIA) E MANDA A OUT
     
 }

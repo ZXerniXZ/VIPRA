@@ -30,4 +30,8 @@ void loop() {
   contatore++;
   //delay(3000);
 
+  //aggiungere delay di sovraccarico
+
+  ///   RICEVI DATI DA LORA E INVIA IN SERIALE A POE CHE POI MANDERà SU SERVER MQTT
+
 }
