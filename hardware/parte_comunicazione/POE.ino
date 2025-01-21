@@ -8,9 +8,13 @@
 #define TXp2 4
 
 
-PicoMQTT::Server mqtt;
 static bool eth_connected = false;
 String messaggio;
+
+uint16_t mqttPort=9000;
+
+PicoMQTT::Server mqtt(mqttPort);
+
 
 void setup() {
 
@@ -28,13 +32,12 @@ void setup() {
   
   Serial.print("Configuring Ethernet...\n");
   ETH.begin();
+  ETH.config(IPAddress(192, 168, 1, 50), IPAddress(192, 168, 1, 150), IPAddress(255, 255, 255, 0));
   NETsetup();
   Serial.print("Network configuration done\n");
   Serial.print("Starting MQTT server...\n");
-  //PicoMQTT::Server mqtt(1883);        porta custom
   mqtt.begin();
   Serial.print("MQTT server started\n");
-
   mqtt.subscribe("MESSAGGI PER SCHEDA OUT", messageReceived);
   Serial.print("MQTT subscribe done...\n");
 }
