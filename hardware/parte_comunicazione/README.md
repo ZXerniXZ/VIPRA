@@ -18,6 +18,7 @@
   * Comunicazione SPI : `<SPI.h>`
   * Server MQTT : `<PicoMQTT.h>`
   * Interfaccia Ethernet scheda POE : `<ETH.h>`
+  
 * Pin comunicazione seriale
   * Scheda IN (TXp1) : `22`
   * Scheda OUT (RXp1) : `21`
@@ -26,6 +27,7 @@
 * Baud rate seriale
   * Seriale per debug : `38400`
   * Seriale per comunicazione tra schede : `115200`
+  
 * Pin comunicazione LoRa
   * Scheda IN
     * LORA_CS : `18`
@@ -36,6 +38,7 @@
     * LORA_RST : `23`
     * LORA_IRQ : `26`
 * Frequenza LoRa : `433E6`
+ 
 * Porta server MQTT : `9000`
 * IP server MQTT : `192.168.1.50`
 * Topic di subsribe della scheda POE : `"MESSAGGI PER SCHEDA OUT"`
