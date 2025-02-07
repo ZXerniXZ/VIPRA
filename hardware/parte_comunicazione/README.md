@@ -8,7 +8,7 @@
 
 ## SCHEMA ELETTRICO
 
-![alt text](https://github.com/ZXerniXZ/projectDayProject/blob/e609d6a2544753bd60eccaf9365c7c5d11094055/hardware/Schema%20elettrico.png)
+![alt text](https://github.com/ZXerniXZ/projectDayProject/blob/cb1a6be08897872936a25effafea403bceb56fd5/hardware/Schema%20elettrico.png)
 
 
 ## INFORMAZIONI UTILI
