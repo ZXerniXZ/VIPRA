@@ -8,3 +8,4 @@ https://github.com/OLIMEX/ESP32-POE/tree/4054ce5d80dcf66261ed52aa4d99f8d5f8ca1f5
 https://fusion-automate.super.site/1f38090ec617464884074d74a9561856
 https://github.com/Xinyuan-LilyGO/LilyGO-T-ETH-Series/blob/c163e5d32fa885fd41c5093eb6c784323285a764/src/src.ino#L131
 https://mceyes.me/github-formattare-il-markdown-per-un-readme-ordinato-e-appetibile/
+https://youtu.be/WQGAs9MwXno?si=8Sj_WPlbeoNj68ed
