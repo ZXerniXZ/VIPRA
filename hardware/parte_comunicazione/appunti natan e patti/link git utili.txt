@@ -10,3 +10,4 @@ https://github.com/Xinyuan-LilyGO/LilyGO-T-ETH-Series/blob/c163e5d32fa885fd41c50
 https://mceyes.me/github-formattare-il-markdown-per-un-readme-ordinato-e-appetibile/
 https://youtu.be/WQGAs9MwXno?si=8Sj_WPlbeoNj68ed
 https://www.youtube.com/watch?v=uropxCRJ7pA
+https://www.doxygen.nl/manual/starting.html
