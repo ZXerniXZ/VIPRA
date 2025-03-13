@@ -1,5 +1,6 @@
 import subprocess
 import os
+import time
 
 # Controlla quale terminale è installato
 if os.system("which lxterminal > /dev/null") == 0:
