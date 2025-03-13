@@ -263,14 +263,14 @@ def main():
 
             # Se MQTT è attivo, pubblichiamo in JSON
             if mqtt_client:
+                
+                print("[DEBUG] Sto per pubblicare su MQTT...")
                 payload = {
                     "num_detections": len(detections_info),
                     "detections": detections_info
-                }
-                try:
-                    mqtt_client.publish(args.mqtt_topic, json.dumps(payload))
-                except Exception as e:
-                    print(f"[MQTT] Errore pubblicazione: {e}")
+                    }
+                result = mqtt_client.publish(args.mqtt_topic, json.dumps(payload))
+                print("[DEBUG] Pubblicazione inviata, result=", result.rc)
 
         else:
             print("Nessun oggetto rilevato.")
