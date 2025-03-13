@@ -1,22 +1,13 @@
 import subprocess
-import os
 import time
 
-# Controlla quale terminale è installato
-if os.system("which lxterminal > /dev/null") == 0:
-    TERMINAL_CMD = "lxterminal -e"
-elif os.system("which xterm > /dev/null") == 0:
-    TERMINAL_CMD = "xterm -hold -e"
-elif os.system("which gnome-terminal > /dev/null") == 0:
-    TERMINAL_CMD = "gnome-terminal --"
-else:
-    print("❌ Nessun terminale compatibile trovato!")
-    exit(1)
-
-# Comandi da eseguire in nuove finestre di terminale
+# Lista di comandi con attesa
 commands_with_wait = [
-    (f"{TERMINAL_CMD} python3 /home/pi/mqttStart.py", 5),
-    (f"{TERMINAL_CMD} python3 /home/pi/raspMAIN.py", 5),
+    ("echo 'inizializzazione server mqtt...'", 0),
+    ("gnome-terminal -- bash -c 'python3 /home/laserlab/projectDayProject/software/parte_ai/mqttStart.py; exec bash'", 5),
+    ("echo 'mqtt inizializzato'", 0),
+    ("gnome-terminal -- bash -c 'python3 /home/laserlab/projectDayProject/software/parte_ai/raspMAIN.py; exec bash'", 5),
+    ("echo 'MAIN inizializzato'", 0),
 ]
 
 # Esegui ogni comando in una nuova finestra
