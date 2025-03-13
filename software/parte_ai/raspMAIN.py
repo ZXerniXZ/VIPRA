@@ -1,10 +1,13 @@
-
 #!/usr/bin/env python3
 import argparse
 import sys
 from functools import lru_cache
 import cv2
 import numpy as np
+import json
+
+# Libreria MQTT
+import paho.mqtt.client as mqtt
 
 from picamera2 import MappedArray, Picamera2
 from picamera2.devices import IMX500
@@ -20,6 +23,7 @@ class Detection:
         """Crea un oggetto Detection con bounding box (x,y,w,h), categoria e confidenza."""
         self.category = category
         self.conf = conf
+        # Converte le coordinate di inferenza in coordinate pixel per disegnare i box.
         self.box = imx500.convert_inference_coords(coords, metadata, picam2)
 
 def parse_detections(metadata: dict, imx500, intrinsics, picam2, args):
@@ -40,8 +44,8 @@ def parse_detections(metadata: dict, imx500, intrinsics, picam2, args):
     # Se la rete usa postprocess "nanodet"
     if intrinsics.postprocess == "nanodet":
         boxes, scores, classes = postprocess_nanodet_detection(
-            outputs=np_outputs[0], 
-            conf=threshold, 
+            outputs=np_outputs[0],
+            conf=threshold,
             iou_thres=iou,
             max_out_dets=max_detections
         )[0]
@@ -140,6 +144,19 @@ def get_args():
     parser.add_argument("--labels", type=str, help="Path to the labels file")
     parser.add_argument("--print-intrinsics", action="store_true",
                         help="Print JSON network_intrinsics then exit")
+
+    # --------------------- Nuovi Argomenti per MQTT ---------------------
+    parser.add_argument("--mqtt-host", type=str, default=None,
+                        help="Hostname del broker MQTT (es. localhost)")
+    parser.add_argument("--mqtt-port", type=int, default=1883,
+                        help="Porta del broker MQTT (default 1883)")
+    parser.add_argument("--mqtt-topic", type=str, default="imx500/detections",
+                        help="Topic MQTT su cui pubblicare le rilevazioni")
+    parser.add_argument("--mqtt-username", type=str, default=None,
+                        help="Username per l'autenticazione MQTT (opzionale)")
+    parser.add_argument("--mqtt-password", type=str, default=None,
+                        help="Password per l'autenticazione MQTT (opzionale)")
+
     return parser.parse_args()
 
 def main():
@@ -155,7 +172,7 @@ def main():
         print("Network is not an object detection task", file=sys.stderr)
         sys.exit(1)
 
-    # Se l'utente ha specificato un file di label, carichiamo
+    # Se l'utente ha specificato un file di label, carichiamolo
     if args.labels:
         with open(args.labels, 'r') as f:
             lines = f.read().splitlines()
@@ -189,10 +206,10 @@ def main():
     # Mostra barra di caricamento del firmware
     imx500.show_network_fw_progress_bar()
 
-    # Avvia la camera con anteprima (richiede ambiente grafico/monitor/VNC)
+    # Avvia la camera con anteprima
     picam2.start(config, show_preview=True)
 
-    # Se richiesto, preserviamo ratio
+    # Se richiesto, preserva ratio
     if intrinsics.preserve_aspect_ratio:
         imx500.set_auto_aspect_ratio()
 
@@ -203,19 +220,58 @@ def main():
     def user_callback(request):
         draw_detections(request, "main", last_detections, intrinsics, imx500)
 
-    # Agganciamo la funzione al pre_callback di picamera2
     picam2.pre_callback = user_callback
+
+    # --------------------- Sezione per MQTT ---------------------
+    # Se l'utente fornisce --mqtt-host, ci connettiamo al broker
+    mqtt_client = None
+    if args.mqtt_host:
+        mqtt_client = mqtt.Client()
+        # Se servono credenziali, impostiamole
+        if args.mqtt_username:
+            mqtt_client.username_pw_set(args.mqtt_username, args.mqtt_password)
+
+        # Connessione al broker
+        try:
+            mqtt_client.connect(args.mqtt_host, args.mqtt_port, 60)
+            mqtt_client.loop_start()
+            print(f"[MQTT] Connesso a {args.mqtt_host}:{args.mqtt_port}, topic='{args.mqtt_topic}'")
+        except Exception as e:
+            print(f"[MQTT] Errore di connessione: {e}")
+            mqtt_client = None
 
     # Loop principale: a ogni frame si fanno inferenze e si stampano i risultati
     while True:
         metadata = picam2.capture_metadata()
         last_detections = parse_detections(metadata, imx500, intrinsics, picam2, args)
+
         # Stampa i risultati in console
         if last_detections:
             print(f"Rilevati {len(last_detections)} oggetti:")
+            detections_info = []
             for d in last_detections:
                 (x, y, w, h) = d.box
                 print(f"  - Categoria: {d.category}, Conf: {d.conf:.2f}, Box=({x},{y},{w},{h})")
+
+                # Costruiamo un dizionario per ciascun oggetto
+                det_dict = {
+                    "category": int(d.category),
+                    "confidence": float(f"{d.conf:.2f}"),
+                    "box": [x, y, w, h]
+                }
+                detections_info.append(det_dict)
+
+            # Se MQTT è attivo, pubblichiamo in JSON
+            if mqtt_client:
+                payload = {
+                    "num_detections": len(detections_info),
+                    "detections": detections_info
+                }
+                try:
+                    mqtt_client.publish(args.mqtt_topic, json.dumps(payload))
+                except Exception as e:
+                    print(f"[MQTT] Errore pubblicazione: {e}")
+
         else:
             print("Nessun oggetto rilevato.")
 
