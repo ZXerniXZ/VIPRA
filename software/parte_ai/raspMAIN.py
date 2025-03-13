@@ -153,32 +153,43 @@ def make_broker_config(bind_port):
     }
 
 
-async def broker_coroutine(bind_port):
-    """Coroutines principale del broker (async)."""
+async def broker_task(bind_port):
+    """
+    Funzione asincrona principale del broker. Avvia HBMQTT sulla porta indicata
+    e resta in esecuzione finché non viene terminata.
+    """
     broker = Broker(make_broker_config(bind_port))
     await broker.start()
-    print(f"[BROKER] MQTT Broker in ascolto sulla porta {bind_port} (HBMQTT).")
-    # Resta in esecuzione fino a interruzione
-    while True:
-        await asyncio.sleep(1)
+    print(f"[BROKER] MQTT Broker in ascolto su 0.0.0.0:{bind_port}")
+
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except asyncio.CancelledError:
+        print("[BROKER] Terminazione broker in corso...")
+        await broker.shutdown()
 
 
 def start_broker_in_thread(bind_port):
     """
     Avvia il broker HBMQTT su un thread separato con un loop asyncio dedicato.
-    Permette di continuare il resto del codice in parallelo.
     """
     def _broker_thread():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        # Avviamo la coroutines broker_task in questo nuovo event loop
+        task = broker_task(bind_port)
         try:
-            loop.run_until_complete(broker_coroutine(bind_port))
+            loop.run_until_complete(task)
         except KeyboardInterrupt:
             pass
+        finally:
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
 
     t = threading.Thread(target=_broker_thread, daemon=True)
     t.start()
-    # Attendi 1 secondo per dare modo al broker di avviarsi
+    # Attendi un po' di tempo per dare modo al broker di avviarsi
     time.sleep(1)
 
 
@@ -222,7 +233,7 @@ def get_args():
 def main():
     args = get_args()
 
-    # 1) Avvia il BROKER in un thread
+    # 1) Avvia il BROKER in un thread (async) sulla porta specificata
     start_broker_in_thread(args.mqtt_port)
 
     # 2) Inizializza IMX500 e intrinsics
@@ -277,7 +288,7 @@ def main():
 
     picam2.pre_callback = user_callback
 
-    # 4) Prepara un CLIENT MQTT locale per pubblicare i rilevamenti sul broker appena avviato.
+    # 4) Prepara un CLIENT MQTT locale per pubblicare i rilevamenti sul broker appena avviato
     mqtt_client = paho.Client()
     try:
         mqtt_client.connect("localhost", args.mqtt_port, 60)
