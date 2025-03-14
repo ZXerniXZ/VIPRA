@@ -5,6 +5,7 @@ import json
 import cv2
 import numpy as np
 from functools import lru_cache
+import time
 
 # Client MQTT (paho-mqtt)
 import paho.mqtt.client as mqtt
@@ -17,7 +18,6 @@ from picamera2.devices.imx500 import (
     postprocess_nanodet_detection
 )
 
-# Variabile globale per mantenere l'ultima lista di rilevamenti
 last_detections = []
 
 class Detection:
@@ -25,7 +25,6 @@ class Detection:
         """Crea un oggetto Detection con bounding box (x,y,w,h), categoria e confidenza."""
         self.category = category
         self.conf = conf
-        # Converte le coordinate di inferenza in coordinate pixel per disegnare i box.
         self.box = imx500.convert_inference_coords(coords, metadata, picam2)
 
 def parse_detections(metadata: dict, imx500, intrinsics, picam2, args):
@@ -67,7 +66,6 @@ def parse_detections(metadata: dict, imx500, intrinsics, picam2, args):
         boxes = np.array_split(boxes, 4, axis=1)
         boxes = zip(*boxes)
 
-    # Creiamo la lista di rilevamenti filtrando per soglia di confidenza
     last_detections = [
         Detection(box, category, score, metadata, picam2, imx500)
         for box, score, category in zip(boxes, scores, classes)
@@ -93,19 +91,18 @@ def draw_detections(request, stream, last_results, intrinsics, imx500):
         for detection in last_results:
             x, y, w, h = detection.box
             cat_idx = int(detection.category)
-
+            # Verifica che l'indice rientri nella lista delle label
             if 0 <= cat_idx < len(labels):
                 label_str = labels[cat_idx]
             else:
                 label_str = f"Label{cat_idx}"
-
             conf_str = f"({detection.conf:.2f})"
             text = f"{label_str} {conf_str}"
 
-            # Disegno del box
+            # Disegna il bounding box
             cv2.rectangle(m.array, (x, y), (x + w, y + h), (0, 255, 0), thickness=2)
 
-            # Disegno dell'etichetta su sfondo bianco semitrasparente
+            # Disegna l'etichetta su uno sfondo bianco semitrasparente
             (text_w, text_h), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
             text_x, text_y = x + 5, y + 15
             overlay = m.array.copy()
@@ -118,7 +115,7 @@ def draw_detections(request, stream, last_results, intrinsics, imx500):
             cv2.putText(m.array, text, (text_x, text_y),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
-        # Se si preserva aspect ratio, disegno il ROI
+        # Se si preserva l'aspect ratio, disegna anche il ROI
         if intrinsics.preserve_aspect_ratio:
             b_x, b_y, b_w, b_h = imx500.get_roi_scaled(request)
             color = (255, 0, 0)
@@ -143,7 +140,7 @@ def get_args():
     parser.add_argument("--postprocess", choices=["", "nanodet"], default=None,
                         help="Run post process of type")
     parser.add_argument("-r", "--preserve-aspect-ratio", action=argparse.BooleanOptionalAction,
-                        help="preserve pixel aspect ratio of input tensor")
+                        help="Preserve pixel aspect ratio of input tensor")
     parser.add_argument("--labels", type=str, help="Path to the labels file")
     parser.add_argument("--print-intrinsics", action="store_true",
                         help="Print JSON network_intrinsics then exit")
@@ -164,30 +161,29 @@ def get_args():
 def main():
     args = get_args()
 
-    # Inizializza IMX500
+    # Inizializza IMX500 e network intrinsics
     imx500 = IMX500(args.model)
     intrinsics = imx500.network_intrinsics
     if not intrinsics:
+        from picamera2.devices.imx500 import NetworkIntrinsics
         intrinsics = NetworkIntrinsics()
         intrinsics.task = "object detection"
     elif intrinsics.task != "object detection":
         print("Network is not an object detection task", file=sys.stderr)
         sys.exit(1)
 
-    # Se l'utente ha specificato un file di label, carichiamolo
     if args.labels:
         with open(args.labels, 'r') as f:
             lines = f.read().splitlines()
         intrinsics.labels = lines
 
-    # Override di altri parametri dal command line
+    # Aggiorna gli attributi dell'intrinsics con i parametri passati
     for key, value in vars(args).items():
         if key == 'labels':
             continue
         if hasattr(intrinsics, key) and value is not None:
             setattr(intrinsics, key, value)
 
-    # Se ancora non ci sono label, fallback su un file di default
     if intrinsics.labels is None:
         with open("assets/coco_labels.txt", "r") as f:
             intrinsics.labels = f.read().splitlines()
@@ -204,14 +200,8 @@ def main():
         controls={"FrameRate": intrinsics.inference_rate},
         buffer_count=12
     )
-
-    # Mostra barra di caricamento del firmware
     imx500.show_network_fw_progress_bar()
-
-    # Avvia la camera con anteprima
     picam2.start(config, show_preview=True)
-
-    # Se richiesto, preserva ratio
     if intrinsics.preserve_aspect_ratio:
         imx500.set_auto_aspect_ratio()
 
@@ -220,60 +210,48 @@ def main():
 
     def user_callback(request):
         draw_detections(request, "main", last_detections, intrinsics, imx500)
-
-    # Callback che disegna i bounding box
     picam2.pre_callback = user_callback
 
-    # Creiamo un client MQTT e ci colleghiamo al broker Mosquitto
-    mqtt_client = None
-    if args.mqtt_host:
-        mqtt_client = mqtt.Client()
-        # Se servono credenziali, impostiamole
-        if args.mqtt_username:
-            mqtt_client.username_pw_set(args.mqtt_username, args.mqtt_password)
+    # Configura il client MQTT
+    mqtt_client = mqtt.Client()
+    if args.mqtt_username:
+        mqtt_client.username_pw_set(args.mqtt_username, args.mqtt_password)
+    try:
+        mqtt_client.connect(args.mqtt_host, args.mqtt_port, 60)
+        mqtt_client.loop_start()
+        print(f"[MQTT] Connesso a {args.mqtt_host}:{args.mqtt_port}, topic='{args.mqtt_topic}'")
+    except Exception as e:
+        print(f"[MQTT] Errore di connessione: {e}")
+        mqtt_client = None
 
-        # Connessione al broker
-        try:
-            mqtt_client.connect(args.mqtt_host, args.mqtt_port, 60)
-            mqtt_client.loop_start()
-            print(f"[MQTT] Connesso a {args.mqtt_host}:{args.mqtt_port}, topic='{args.mqtt_topic}'")
-        except Exception as e:
-            print(f"[MQTT] Errore di connessione: {e}")
-            mqtt_client = None
+    # Variabile per tracciare lo stato precedente della scena
+    object_detected_prev = False
 
-    # Loop principale: a ogni frame si fanno inferenze e si stampano i risultati
+    # Loop principale: inferenza e pubblicazione
     while True:
         metadata = picam2.capture_metadata()
         last_detections = parse_detections(metadata, imx500, intrinsics, picam2, args)
-        # Stampa i risultati in console
+        
+        # Se rilevi almeno un oggetto
         if last_detections:
             print(f"Rilevati {len(last_detections)} oggetti:")
-            detections_info = []
             for d in last_detections:
                 (x, y, w, h) = d.box
                 print(f"  - Categoria: {d.category}, Conf: {d.conf:.2f}, Box=({x},{y},{w},{h})")
-
-                # Costruiamo un dizionario per ciascun oggetto
-                det_dict = {
-                    "category": int(d.category),
-                    "confidence": float(f"{d.conf:.2f}"),
-                    "box": [x, y, w, h]
-                }
-                detections_info.append(det_dict)
-
-            # Se MQTT è attivo, pubblichiamo in JSON
-            if mqtt_client:
-                
-                print("[DEBUG] Sto per pubblicare su MQTT...")
-                payload = {
-                    "num_detections": len(detections_info),
-                    "detections": detections_info
-                    }
-                result = mqtt_client.publish(args.mqtt_topic, json.dumps(payload))
-                print("[DEBUG] Pubblicazione inviata, result=", result.rc)
-
+            
+            # Se la scena passa da "vuota" a "con oggetti", pubblica l'alert
+            if not object_detected_prev:
+                alert_message = {"alert": "Oggetto entrato nella scena"}
+                try:
+                    mqtt_client.publish(args.mqtt_topic, json.dumps(alert_message))
+                    print("[MQTT] Alert pubblicato: Oggetto entrato nella scena")
+                except Exception as e:
+                    print(f"[MQTT] Errore pubblicazione alert: {e}")
+                object_detected_prev = True
         else:
             print("Nessun oggetto rilevato.")
+            # Resetta lo stato se la scena è vuota
+            object_detected_prev = False
 
 if __name__ == "__main__":
     main()
