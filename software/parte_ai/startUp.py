@@ -18,7 +18,7 @@ def set_static_ip():
     """
     Imposta un indirizzo IP statico su wlan0 o eth0 se non c'è connessione a Internet.
     """
-    interface = "wlan0"  # Cambia in "eth0" se usi una connessione cablata
+    interface = "eth0" 
     static_ip = "192.168.1.100"
     gateway = "192.168.1.1"
     netmask = "255.255.255.0"
