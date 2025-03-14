@@ -16,14 +16,15 @@ def is_online():
 
 # Lista di comandi con attesa
 commands_with_wait = [
-    ("echo aggiornamento da public repo...", 0),
+    ("echo tentativo aggiornamento da public repo...", 0),
     # Prima di eseguire il git pull, verrà verificato lo stato online
     ("cd projectDayProject && git pull", 10),
     ("echo 'inizializzazione server mqtt...'", 0),
     ("gnome-terminal -- bash -c 'python3 /home/laserlab/projectDayProject/software/parte_ai/mqttStart.py; exec bash'", 5),
-    ("echo 'mqtt inizializzato'", 0),
+    ("echo -e '\e[32mmqtt inizializzato'", 0),
+    ("echo 'run MAIN script...'", 0),
     ("gnome-terminal -- bash -c 'python3 /home/laserlab/projectDayProject/software/parte_ai/raspMAIN.py; exec bash'", 5),
-    ("echo 'MAIN inizializzato'", 0),
+    ("echo -e '\e[32mMAIN inizializzato'", 0),
 ]
 
 # Esegui ogni comando in sequenza
@@ -37,6 +38,5 @@ for cmd, delay in commands_with_wait:
             # Salta questo comando e passa al successivo
             time.sleep(delay)
             continue
-    print(f"Eseguendo: {cmd}")
     subprocess.Popen(cmd, shell=True)
     time.sleep(delay)
