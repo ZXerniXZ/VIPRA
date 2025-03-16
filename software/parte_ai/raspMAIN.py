@@ -216,11 +216,11 @@ def main():
     mqtt_client = mqtt.Client()
     if args.mqtt_username:
         mqtt_client.username_pw_set(args.mqtt_username, args.mqtt_password)
-    try:
+    #try:
         mqtt_client.connect(args.mqtt_host, args.mqtt_port, 60)
         mqtt_client.loop_start()
         print(f"[MQTT] Connesso a {args.mqtt_host}:{args.mqtt_port}, topic='{args.mqtt_topic}'")
-    except Exception as e:
+    #except Exception as e:
         print(f"[MQTT] Errore di connessione: {e}")
         mqtt_client = None
 
@@ -242,12 +242,12 @@ def main():
             # Se la scena passa da "vuota" a "con oggetti", pubblica l'alert
             if not object_detected_prev:
                 #alert_message = {"alert": "Oggetto entrato nella scena"}
-                try:
+                #try:
                     mqtt_client.publish(args.mqtt_topic, json.dumps(alert_message))
                     print("[MQTT] Alert pubblicato: Oggetto entrato nella scena")
-                except Exception as e:
+                #except Exception as e:
                     print(f"[MQTT] Errore pubblicazione alert: {e}")
-                object_detected_prev = True
+                #object_detected_prev = True
         else:
             #print("Nessun oggetto rilevato.")
             # Resetta lo stato se la scena è vuota
