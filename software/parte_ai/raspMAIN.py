@@ -244,8 +244,11 @@ def main():
     # Loop principale: inferenza e pubblicazione
     while True:
         metadata = picam2.capture_metadata()
-        last_detections = parse_detections(metadata, imx500, intrinsics, picam2, args)
-        
+        try:
+            last_detections = parse_detections(metadata, imx500, intrinsics, picam2, args)
+        except Exception as e:
+            print("ERRORE FUNZIONE PARSE_DETECTIONS {e}")
+
         # Se rilevi almeno un oggetto
         if last_detections:
             print(f"Rilevati {len(last_detections)} oggetti:")
