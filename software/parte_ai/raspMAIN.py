@@ -241,7 +241,7 @@ def main():
             
             # Se la scena passa da "vuota" a "con oggetti", pubblica l'alert
             if not object_detected_prev:
-                alert_message = {"alert": "Oggetto entrato nella scena"}
+                #alert_message = {"alert": "Oggetto entrato nella scena"}
                 try:
                     mqtt_client.publish(args.mqtt_topic, json.dumps(alert_message))
                     print("[MQTT] Alert pubblicato: Oggetto entrato nella scena")
@@ -249,9 +249,12 @@ def main():
                     print(f"[MQTT] Errore pubblicazione alert: {e}")
                 object_detected_prev = True
         else:
-            print("Nessun oggetto rilevato.")
+            #print("Nessun oggetto rilevato.")
             # Resetta lo stato se la scena è vuota
             object_detected_prev = False
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(e)
