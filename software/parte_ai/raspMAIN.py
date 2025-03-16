@@ -86,7 +86,11 @@ def draw_detections(request, stream, last_results, intrinsics, imx500):
     if not last_results:
         return
 
-    labels = get_labels(intrinsics)
+    try:
+        labels = get_labels(intrinsics)
+    except Exception as e:
+        print("ERRORE FUNZIONE GET_LABELS {e}")
+
     with MappedArray(request, stream) as m:
         for detection in last_results:
             x, y, w, h = detection.box
@@ -159,7 +163,10 @@ def get_args():
     return parser.parse_args()
 
 def main():
-    args = get_args()
+    try:
+        args = get_args()
+    except Exception as e:
+        print("ERRORE FUNZIONE GET_ARGS {e}")
 
     # Inizializza IMX500 e network intrinsics
     imx500 = IMX500(args.model)
@@ -209,8 +216,15 @@ def main():
     last_detections = []
 
     def user_callback(request):
-        draw_detections(request, "main", last_detections, intrinsics, imx500)
-    picam2.pre_callback = user_callback
+        try:
+            draw_detections(request, "main", last_detections, intrinsics, imx500)
+        except Exception as e:
+            print("ERRORE FUNZIONE DRAW_DETECTIONS {e}")
+
+    try:
+        picam2.pre_callback = user_callback
+    except Exception as e:
+        print("ERRORE FUNZIONE GET_ARGS {e}")
 
     # Configura il client MQTT
     mqtt_client = mqtt.Client()
