@@ -43,6 +43,8 @@ commands_with_wait_offline = [
     ("echo -e '\e[32mMQTT inizializzato\e[0m'", 0),
     ("gnome-terminal -- bash -c 'python3 /home/laserlab/projectDayProject/software/parte_ai/raspMAIN.py; exec bash'", 5),
     ("echo -e '\e[35mMAIN inizializzato\e[0m'", 0),
+    ("gnome-terminal -- bash -c 'python3 /home/laserlab/projectDayProject/software/parte_ai/checkRete.py; exec bash'", 5),
+    ("echo -e '\e[35mcheckRete inizializzato\e[0m'", 0),
 ]
 
 # Controlla se siamo online
