@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 4
+names: ['car', 'moto', 'objects', 'pearson']
+
+roboflow:
+  workspace: project-day-dataset
+  project: project-day
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/project-day-dataset/project-day/dataset/2
