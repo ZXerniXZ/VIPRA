@@ -1,25 +1,36 @@
-ATTENZIONE: le raspberry py sono configurate in tal modo da prendere i codici in questa sezione della repository all'avvio, per favore NON modificare in alcun modo il path di questi script
+#Installazione su Raspberry Pi 4 (Fresh Setup)
 
-installazione su rasp pi 4 fresh
+⚠️ **IMPORTANTE**  
+Le Raspberry Pi sono configurate per eseguire automaticamente gli script da questa sezione della repository all'avvio. **Non modificare il percorso degli script.**
 
--generare chiavi pubbliche ssh per connessione autorizzata a github
+---
 
--pull repo su /home
+## Installazione su rasp fresh
 
--installare ultima versione di python con
+### **Esegui questi comandi in sequenza sulla tua Raspberry Pi 4**:
 
+```bash
+# 1️⃣ Generare chiavi SSH per connessione sicura a GitHub
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+
+# 2️⃣ Clonare la repository nella directory /home
+cd /home
+git clone git@github.com:your-repo/projectDayProject.git
+
+# 3️⃣ Aggiornare i pacchetti e installare Python
+sudo apt update
 sudo apt install python
 
-verificare con:
-
+# 4️⃣ Verificare l’installazione di Python
 python --version
 
--installare dependency
-
+# 5️⃣ Installare le dipendenze
 pip install -r /home/usr/projectDayProject/software/parte-ai/dependency.txt
 
--impostare ip statico standard su impostazioni
+# 6️⃣ Configurare un IP statico manualmente (IPv4: 192.168.1.100/24)
 
-manual: ipv4 192.168.1.100/24
+# 7️⃣ Connettere la scheda a Internet tramite Ethernet e riavviare
+sudo reboot
 
--connettere la scheda ad internet tramite eth se non lo è già ed eseguire il reboot della scheda, se la scheda dopo qualche minuto dell'accensione si spegne, allora il setup è andato a buon fine
+#verifica:
+se la scheda al reboot connessa ad internet dopo qualche minuto si spegne, il setup è avvenuto in modo corretto
