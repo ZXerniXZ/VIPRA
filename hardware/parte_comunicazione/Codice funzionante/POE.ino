@@ -3,61 +3,81 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/queue.h>
+#include <ESPping.h>
 
 #define RXp1 2
 #define TXp2 4
 
 static bool eth_connected = false;
 uint16_t mqttPort = 9000;
+static String topic = "imx500/detections";
 
-PicoMQTT::Server mqtt(mqttPort);
+PicoMQTT::Client mqtt("192.168.1.100", 9000);
 
-// Coda per i messaggi ricevuti da Serial1
-QueueHandle_t xQueue;
+TaskHandle_t 
+  SerialReceiveTask, // Ricezione e invio dati in seriale
+  MqttTask,          // Connessione al server MQTT
+  EthMonitorTask;    // Monitor per eventi di connessione ethernet
 
-void serialReceiveTask(void *pvParameters);
-void mqttTask(void *pvParameters);
-void ethMonitorTask(void *pvParameters);
+
+// Creazione della coda per i messaggi
+QueueHandle_t xQueue = xQueueCreate(10, sizeof(char) * 128);
 
 void setup() {
-  Serial.setTimeout(100);
-  Serial1.setTimeout(100);
-  Serial2.setTimeout(100);
-
-  Serial.begin(38400);
-  Serial1.begin(115200, SERIAL_8N1, RXp1, -1);
-  Serial2.begin(115200, SERIAL_8N1, -1, TXp2);
 
   delay(100);
 
-  Serial.print("Setup...\n");
+  // Configurazione Seriale
+  setupSeriale();
 
   // Configurazione Ethernet
-  Serial.print("Configuring Ethernet...\n");
-  ETH.begin();
-  ETH.config(IPAddress(192, 168, 1, 50), IPAddress(192, 168, 1, 150), IPAddress(255, 255, 255, 0));
-  NETsetup();
-  Serial.print("Network configuration done\n");
+  setupEthernet();
 
-  // Avvio del server MQTT
-  Serial.print("Starting MQTT server...\n");
-  mqtt.begin();
-  Serial.print("MQTT server started\n");
-  mqtt.subscribe("MESSAGGI PER SCHEDA OUT", messageReceived);
-  Serial.print("MQTT subscribe done...\n");
-
-  // Creazione della coda per i messaggi
-  xQueue = xQueueCreate(10, sizeof(String));
+  // Configurazione MQTT
+  setupMQTT();
 
   // Creazione dei task con assegnazione esplicita dei core
-  xTaskCreatePinnedToCore(serialReceiveTask, "SerialReceive", 10000, NULL, 2, NULL, 0); // Core 0, priorità alta
-  xTaskCreatePinnedToCore(mqttTask, "MQTT", 10000, NULL, 1, NULL, 1);              // Core 1, priorità media
-  xTaskCreatePinnedToCore(ethMonitorTask, "ETHMonitor", 10000, NULL, 1, NULL, 0); // Core 0, priorità media
+  Serial.println("Creating tasks...");
+    xTaskCreatePinnedToCore(
+      serialReceiveTask, // Nome funzione
+      "SerialReceive", // Nome task
+      10240, // Dimensione stack
+      NULL,  // Parametri
+      1,  // Priorità
+      &SerialReceiveTask,  // Task handle
+      0)  // Core
+    ;
+    
+    xTaskCreatePinnedToCore(
+      mqttTask, // Nome funzione
+      "MQTT", // Nome task
+      10240, // Dimensione stack
+      NULL,  // Parametri
+      2,  // Priorità
+      &MqttTask,  // Task handle
+      1)   // Core
+    ;  
+  
+    xTaskCreatePinnedToCore(
+      ethMonitorTask, // Nome funzione
+      "ETHMonitor", // Nome task
+      10240, // Dimensione stack
+      NULL,  // Parametri
+      0,  // Priorità
+      &EthMonitorTask,  // Task handle
+      0)  // Core
+    ;  
+
+  Serial.println("Tasks created");
+
+  Serial.println("Setup done");
 }
 
-void serialReceiveTask(void *pvParameters) {
+void serialReceiveTask(void * parameter) {
   while (true) {
+
     String messaggio = loraReceiveStringSerial1();
+    
     if (messaggio.length() >= 1) {
       Serial.println("Messaggio ricevuto da scheda IN: " + messaggio);
 
@@ -70,30 +90,28 @@ void serialReceiveTask(void *pvParameters) {
   }
 }
 
-void mqttTask(void *pvParameters) {
+void mqttTask(void * parameter) {
   while (true) {
 
     String messaggio;
-
-    // Ricevi il messaggio dalla coda
     if (uxQueueMessagesWaiting(xQueue) > 0) {
       if (xQueueReceive(xQueue, &messaggio, 0) == pdTRUE) {
       mqtt.publish("MESSAGGI DA SCHEDA IN", messaggio);
       }
     }
-    mqtt.loop();
     vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
 
-void ethMonitorTask(void *pvParameters) {
+void ethMonitorTask(void * parameter) {
   while (true) {
+    
     if (!ETH.linkUp() || ETH.localIP() == IPAddress(0, 0, 0, 0)) {
       Serial.println("ETH Disconnected or IP lost\nReconnecting...");
       eth_connected = false;
       NETsetup();
     }
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
   }
 }
 
@@ -108,7 +126,7 @@ String loraReceiveStringSerial1() {
 }
 
 void messageReceived(String topic, String payload) {
-  Serial.print("Received message: ");
+  Serial.print("Messaggio ricevuto: ");
   Serial.println(payload);
   Serial2.println(payload);
 }
@@ -116,7 +134,7 @@ void messageReceived(String topic, String payload) {
 void NETsetup() {
   while (!ETH.linkUp()) {
     Serial.println("Waiting for Ethernet link...");
-    delay(1000);
+    delay(3000);
   }
 
   Serial.println("ETH Connected");
@@ -124,7 +142,7 @@ void NETsetup() {
 
   while (ETH.localIP() == IPAddress(0, 0, 0, 0)) {
     Serial.println("Waiting for IP address...");
-    delay(1000);
+    delay(3000);
   }
 
   Serial.print("Got an IP Address for ETH MAC: ");
@@ -137,6 +155,48 @@ void NETsetup() {
   Serial.print(", ");
   Serial.print(ETH.linkSpeed());
   Serial.println("Mbps");
+}
+
+void setupSeriale(){
+
+  Serial.setTimeout(100);
+  Serial1.setTimeout(100);
+  Serial2.setTimeout(100);
+
+  Serial.begin(38400);
+  Serial1.begin(115200, SERIAL_8N1, RXp1, -1);
+  Serial2.begin(115200, SERIAL_8N1, -1, TXp2);
+
+  Serial.println("Serial configuration done...");
+}
+
+void setupEthernet(){
+
+  Serial.println("Configuring Ethernet...");
+  ETH.begin();
+  ETH.config(IPAddress(192, 168, 1, 50), IPAddress(-1, -1, -1, -1), IPAddress(255, 255, 255, 0));
+  NETsetup();
+  Serial.println("Network configuration done...");
+
+}
+
+void setupMQTT(){
+
+  Serial.println("Configuring MQTT connection...");
+  const IPAddress remote_ip(192,168,1,100);
+  if (Ping.ping(remote_ip)) {
+    Serial.println("ESP32 → PC: Ping OK!");
+  } else {
+    Serial.println("ESP32 → PC: Ping FAILED!");
+  }
+
+  mqtt.subscribe(topic, messageReceived);
+
+  Serial.println("Connected to server: "+mqtt.host+"\nPort: "+mqtt.port);
+  mqtt.subscribe(topic, messageReceived);
+  Serial.print("MQTT subscribe at ["+topic+"] topic done\n");
+  Serial.println("MQTT connection setup done");
+  
 }
 
 void loop() {}

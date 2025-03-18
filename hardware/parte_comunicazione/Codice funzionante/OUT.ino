@@ -12,6 +12,8 @@
 // Pin seriale
 #define RXp1 21
 
+#define MAX_MESSAGE_LENGTH 2500 // Lunghezza massima del messaggio
+
 String const machine_code = "12345677ABC"; // Codice macchina
 QueueHandle_t xQueue; // Coda per i messaggi ricevuti da Serial1
 
@@ -38,8 +40,7 @@ void setup() {
     Serial.println("LoRa inizializzato con successo!");
   }
 
-  // Crea una coda per 10 messaggi di tipo String
-  xQueue = xQueueCreate(10, sizeof(String));
+  xQueue = xQueueCreate(10, sizeof(char[MAX_MESSAGE_LENGTH]));
 
   // Creazione dei task
   xTaskCreatePinnedToCore(
@@ -68,8 +69,6 @@ void comunicazioneSeriale(void * parameter) {
     // Ricezione messaggio da Serial1
     String nuovoMessaggio = loraReceiveStringSerial1();
     if (nuovoMessaggio.length() >= 1) {
-      Serial.println("[Seriale] Messaggio ricevuto: " + nuovoMessaggio);
-
       // Invia il messaggio alla coda
       if (xQueueSend(xQueue, &nuovoMessaggio, portMAX_DELAY) != pdTRUE) {
         Serial.println("[Seriale] Errore: coda piena!");
@@ -82,11 +81,13 @@ void comunicazioneSeriale(void * parameter) {
 
 void comunicazioneLoRa(void * parameter) {
   for(;;) {
-    String messaggioDaInviare;
+
+    char messaggioDaInviare[MAX_MESSAGE_LENGTH];
 
     // Ricevi il messaggio dalla coda
     if (xQueueReceive(xQueue, &messaggioDaInviare, portMAX_DELAY) == pdTRUE) {
-      Serial.println("[LoRa] Messaggio ricevuto dalla coda: " + messaggioDaInviare);
+      Serial.print("[LoRa] Messaggio ricevuto dalla coda: ");
+      Serial.print(messaggioDaInviare+'\n');
 
       // Invia il messaggio via LoRa
       loraSendString(machine_code + messaggioDaInviare);
