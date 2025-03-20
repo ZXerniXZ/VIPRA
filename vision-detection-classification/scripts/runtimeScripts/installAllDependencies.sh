@@ -16,8 +16,7 @@ sudo apt install -y python3 python3-pip python3-opencv python3-numpy
 
 # 3) Installa paho-mqtt (per mqttStart.py e raspMAIN.py)
 echo "[3/7] Installo libreria Python paho-mqtt..."
-pip3 install --upgrade pip
-pip3 install paho-mqtt
+sudo apt install python3-paho-mqtt
 
 # 4) Installa Mosquitto (broker MQTT) e i client
 echo "[4/7] Installo Mosquitto e mosquitto-clients..."
