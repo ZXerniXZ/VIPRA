@@ -30,7 +30,7 @@ def main():
     try:
         mqtt_client.connect(args.mqtt_host, args.mqtt_port, 60)
         mqtt_client.loop_start()
-        print(f"[MQTT] Connesso a {args.mqtt-host}:{args.mqtt-port}, topic='{args.mqtt_topic}'")
+        print(f"[MQTT] Connesso a {args.mqtt_host}:{args.mqtt_port}, topic='{args.mqtt_topic}'")
     except Exception as e:
         print("[MQTT] Errore di connessione:", e)
         return
