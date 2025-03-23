@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  mqtt_publisher:
+    build:
+      context: ./publishInferenceMqtt
+      dockerfile: Dockerfile
+    container_name: mqtt_publisher
+    restart: always
+    network_mode: host
+    command: --mqtt-host localhost --mqtt-port 1883 --mqtt-detection-topic imx500/detection --mqtt-framerate-topic imx500/framerate --mqtt-status-topic imx500/status
