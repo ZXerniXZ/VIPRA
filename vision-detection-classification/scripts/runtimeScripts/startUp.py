@@ -39,11 +39,11 @@ commands_with_wait_offline = [
     ("echo -e '\e[33mOFFLINE!, la scheda non tenterà di aggiornare il codice\e[0m'", 0),
     ("echo -e '\e[33mRUN codice principale...\e[0m'", 0),
     ("echo -e '\e[34mInizializzazione server MQTT...\e[0m'", 0),
-    ("gnome-terminal -- bash -c 'python3 /home/laserlab/projectDayProject/vision-detection-classification/scripts/runtimeScripts/mqttStart.py; exec bash'", 5),
+    ("gnome-terminal -- bash -c 'python3 /home/prototipo1/projectDayProject/vision-detection-classification/scripts/runtimeScripts/mqttStart.py; exec bash'", 5),
     ("echo -e '\e[32mMQTT inizializzato\e[0m'", 0),
-    ("gnome-terminal -- bash -c 'python3 /home/laserlab/projectDayProject/vision-detection-classification/scripts/runtimeScripts/raspMAIN.py; exec bash'", 5),
+    ("gnome-terminal -- bash -c 'python3 /home/prototipo1/projectDayProject/vision-detection-classification/scripts/runtimeScripts/raspMAIN.py; exec bash'", 5),
     ("echo -e '\e[35mMAIN inizializzato\e[0m'", 0),
-    ("gnome-terminal -- bash -c 'sudo ./home/laserlab/projectDayProject/vision-detection-classification/scripts/runtimeScripts/setupHotspot.sh; exec bash'", 5),          #aggiungere esecuzione setupHotspot.sh
+    ("gnome-terminal -- bash -c 'sudo ./home/prototipo1/projectDayProject/vision-detection-classification/scripts/runtimeScripts/setupHotspot.sh; exec bash'", 5),          #aggiungere esecuzione setupHotspot.sh
     ("echo -e '\e[35mcheckRete inizializzato\e[0m'", 0),
 ]
 
