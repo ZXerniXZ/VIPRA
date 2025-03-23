@@ -1,17 +1,24 @@
-# Usa un'immagine base leggera con Python
-FROM python:3.11-slim
+FROM python:3.10-slim
+
+# Evita interazioni con apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Installa OpenCV, NumPy e Picamera2 dai repository
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3-opencv \
+        python3-numpy \
+        python3-picamera2 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Installa paho-mqtt (e altre eventuali dipendenze) via pip
+RUN pip install --no-cache-dir paho-mqtt
 
 # Imposta la directory di lavoro
 WORKDIR /app
 
-# Copia il file dello script nella directory di lavoro
+# Copia il tuo script nella directory di lavoro
 COPY publishToMqtt.py .
 
-# Installa le dipendenze richieste
-RUN pip install paho-mqtt opencv-python numpy picamera2
-
-# Espone la porta MQTT (modificare se necessario)
-EXPOSE 1883
-
-# Comando per eseguire lo script
+# Esegui lo script
 CMD ["python", "publishToMqtt.py"]
