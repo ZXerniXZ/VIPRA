@@ -5,17 +5,22 @@ import argparse
 import cv2
 import numpy as np
 import sys
+import signal
 import subprocess
 from functools import lru_cache
 import paho.mqtt.client as mqtt
 
-# Importa le librerie della fotocamera e del modello
+# Importa le librerie per la fotocamera e il modello
 from picamera2 import Picamera2
 from picamera2.devices import IMX500
 from picamera2.devices.imx500 import NetworkIntrinsics, postprocess_nanodet_detection
 
-# Variabile globale per i rilevamenti
+# Variabile globale per mantenere l'ultima lista di rilevamenti
 last_detections = []
+
+# Variabile globale per il client MQTT (per poterla usare nel signal handler)
+mqtt_client = None
+args = None
 
 class Detection:
     def __init__(self, coords, category, conf, metadata, picam2, imx500):
@@ -73,7 +78,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str,
                         default="/usr/share/imx500-models/imx500_network_ssd_mobilenetv2_fpnlite_320x320_pp.rpk",
-                        help="Percorso del file del modello (rpk)")
+                        help="Percorso del modello rpk")
     parser.add_argument("--threshold", type=float, default=0.55, help="Soglia per le rilevazioni")
     parser.add_argument("--iou", type=float, default=0.65, help="Soglia IOU")
     parser.add_argument("--max-detections", type=int, default=10, help="Numero massimo di rilevazioni")
@@ -83,19 +88,30 @@ def get_args():
     parser.add_argument("--mqtt-topic", type=str, default="imx500/detections", help="Topic MQTT per i dati di rilevamento")
     return parser.parse_args()
 
+def signal_handler(sig, frame):
+    """Gestisce la terminazione dello script pubblicando uno stato 'offline'."""
+    global mqtt_client, args
+    if mqtt_client:
+        offline_payload = json.dumps({"status": "offline"})
+        mqtt_client.publish(args.mqtt_topic, offline_payload)
+        mqtt_client.loop_stop()
+    print("Ricevuto segnale di terminazione. Uscita...")
+    sys.exit(0)
+
 def main():
+    global mqtt_client, args
     args = get_args()
+
+    # Imposta il gestore dei segnali per SIGINT e SIGTERM
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     # Inizializza il modello IMX500
     imx500 = IMX500(args.model)
-    intrinsics = imx500.network_intrinsics
-    if not intrinsics:
-        intrinsics = NetworkIntrinsics()
-        intrinsics.task = "object detection"
-    elif intrinsics.task != "object detection":
+    intrinsics = imx500.network_intrinsics or NetworkIntrinsics(task="object detection")
+    if intrinsics.task != "object detection":
         print("Errore: il modello non è configurato per object detection", file=sys.stderr)
         sys.exit(1)
-    # Carica le label, se non presenti usa un file di default
     if intrinsics.labels is None:
         try:
             with open("assets/coco_labels.txt", "r") as f:
@@ -110,20 +126,28 @@ def main():
     config = picam2.create_preview_configuration(buffer_count=12)
     picam2.start(config, show_preview=False)
 
-    # Inizializza il client MQTT
+    # Inizializza il client MQTT e pubblica subito lo stato "online"
     mqtt_client = mqtt.Client()
     try:
         mqtt_client.connect(args.mqtt_host, args.mqtt_port, 60)
         mqtt_client.loop_start()
+        startup_payload = json.dumps({"status": "online"})
+        mqtt_client.publish(args.mqtt_topic, startup_payload)
         print(f"[MQTT] Connesso a {args.mqtt_host}:{args.mqtt_port} su topic '{args.mqtt_topic}'")
     except Exception as e:
         print(f"[MQTT] Errore di connessione: {e}")
         mqtt_client = None
 
+    # Calcola il framerate misurando il tempo tra le iterazioni
+    prev_time = time.time()
     while True:
-        # Cattura metadata per l'inferenza
         metadata = picam2.capture_metadata()
         detections = parse_detections(metadata, imx500, intrinsics, picam2, args)
+        current_time = time.time()
+        dt = current_time - prev_time
+        prev_time = current_time
+        framerate = 1.0/dt if dt > 0 else 0
+
         detection_data = []
         for d in detections:
             x, y, w, h = d.box
@@ -132,7 +156,11 @@ def main():
                 "confidence": float(f"{d.conf:.2f}"),
                 "box": [x, y, w, h]
             })
-        payload = json.dumps({"detections": detection_data})
+        payload = json.dumps({
+            "detections": detection_data,
+            "framerate": framerate,
+            "status": "online"
+        })
         if mqtt_client:
             mqtt_client.publish(args.mqtt_topic, payload)
         time.sleep(0.5)
