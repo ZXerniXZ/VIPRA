@@ -17,8 +17,6 @@ from picamera2.devices.imx500 import NetworkIntrinsics, postprocess_nanodet_dete
 
 # Variabile globale per mantenere l'ultima lista di rilevamenti
 last_detections = []
-
-# Variabile globale per il client MQTT (per poterla usare nel signal handler)
 mqtt_client = None
 args = None
 
@@ -68,7 +66,7 @@ def parse_detections(metadata, imx500, intrinsics, picam2, args):
 
 @lru_cache
 def get_labels(intrinsics):
-    """Restituisce la lista di label, filtrando eventuali '-'."""
+    """Restituisce la lista di label (filtrando eventuali '-')"""
     labels = intrinsics.labels
     if intrinsics.ignore_dash_labels:
         labels = [label for label in labels if label and label != "-"]
@@ -82,18 +80,20 @@ def get_args():
     parser.add_argument("--threshold", type=float, default=0.55, help="Soglia per le rilevazioni")
     parser.add_argument("--iou", type=float, default=0.65, help="Soglia IOU")
     parser.add_argument("--max-detections", type=int, default=10, help="Numero massimo di rilevazioni")
-    # Argomenti per MQTT
+    # Argomenti per MQTT: topic separati per detection, framerate e status
     parser.add_argument("--mqtt-host", type=str, default="localhost", help="Hostname del broker MQTT")
     parser.add_argument("--mqtt-port", type=int, default=1883, help="Porta del broker MQTT")
-    parser.add_argument("--mqtt-topic", type=str, default="imx500/detections", help="Topic MQTT per i dati di rilevamento")
+    parser.add_argument("--mqtt-detection-topic", type=str, default="imx500/detection", help="Topic per i dati di rilevamento")
+    parser.add_argument("--mqtt-framerate-topic", type=str, default="imx500/framerate", help="Topic per il framerate")
+    parser.add_argument("--mqtt-status-topic", type=str, default="imx500/status", help="Topic per lo stato (online/offline)")
     return parser.parse_args()
 
 def signal_handler(sig, frame):
-    """Gestisce la terminazione dello script pubblicando uno stato 'offline'."""
+    """Gestisce la terminazione dello script pubblicando lo stato 'offline'."""
     global mqtt_client, args
     if mqtt_client:
         offline_payload = json.dumps({"status": "offline"})
-        mqtt_client.publish(args.mqtt_topic, offline_payload)
+        mqtt_client.publish(args.mqtt_status_topic, offline_payload)
         mqtt_client.loop_stop()
     print("Ricevuto segnale di terminazione. Uscita...")
     sys.exit(0)
@@ -102,7 +102,8 @@ def main():
     global mqtt_client, args
     args = get_args()
 
-    # Imposta il gestore dei segnali per SIGINT e SIGTERM
+    # Gestione dei segnali per inviare stato 'offline' all'uscita
+    import signal
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
@@ -126,19 +127,18 @@ def main():
     config = picam2.create_preview_configuration(buffer_count=12)
     picam2.start(config, show_preview=False)
 
-    # Inizializza il client MQTT e pubblica subito lo stato "online"
+    # Inizializza il client MQTT e pubblica lo stato "online"
     mqtt_client = mqtt.Client()
     try:
         mqtt_client.connect(args.mqtt_host, args.mqtt_port, 60)
         mqtt_client.loop_start()
         startup_payload = json.dumps({"status": "online"})
-        mqtt_client.publish(args.mqtt_topic, startup_payload)
-        print(f"[MQTT] Connesso a {args.mqtt_host}:{args.mqtt_port} su topic '{args.mqtt_topic}'")
+        mqtt_client.publish(args.mqtt_status_topic, startup_payload)
+        print(f"[MQTT] Connesso a {args.mqtt_host}:{args.mqtt_port}")
     except Exception as e:
         print(f"[MQTT] Errore di connessione: {e}")
         mqtt_client = None
 
-    # Calcola il framerate misurando il tempo tra le iterazioni
     prev_time = time.time()
     while True:
         metadata = picam2.capture_metadata()
@@ -146,7 +146,7 @@ def main():
         current_time = time.time()
         dt = current_time - prev_time
         prev_time = current_time
-        framerate = 1.0/dt if dt > 0 else 0
+        framerate = 1.0 / dt if dt > 0 else 0
 
         detection_data = []
         for d in detections:
@@ -156,13 +156,13 @@ def main():
                 "confidence": float(f"{d.conf:.2f}"),
                 "box": [x, y, w, h]
             })
-        payload = json.dumps({
-            "detections": detection_data,
-            "framerate": framerate,
-            "status": "online"
-        })
+
+        # Pubblica separatamente i dati di rilevamento, il framerate e lo stato "online"
         if mqtt_client:
-            mqtt_client.publish(args.mqtt_topic, payload)
+            mqtt_client.publish(args.mqtt_detection_topic, json.dumps({"detections": detection_data}))
+            mqtt_client.publish(args.mqtt_framerate_topic, json.dumps({"framerate": framerate}))
+            mqtt_client.publish(args.mqtt_status_topic, json.dumps({"status": "online"}))
+        
         time.sleep(0.5)
 
 if __name__ == "__main__":
