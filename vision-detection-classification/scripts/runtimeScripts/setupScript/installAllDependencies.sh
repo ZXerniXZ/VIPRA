@@ -26,4 +26,7 @@ npm install -g create-react-app
 echo "Installazione di librerie aggiuntive per React..."
 npm install react-router-dom axios styled-components @shadcn/ui lucide-react recharts
 
+echo "assegno permessi a setupHotspot.sh..."
+sudo chmod +x setupHotspot.sh
+
 echo "Installazione completata!"
