@@ -61,17 +61,46 @@ commands_with_wait_offline = [
 ]
 
 def run_commands(commands):
-    """Esegue ogni comando, redirigendo output ed errori al log."""
+    """Esegue ogni comando con gestione degli errori e logging."""
     for cmd, delay in commands:
-        log(f"Eseguendo: {cmd}")
-        # Esegui il comando e cattura stdout e stderr
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
-        if stdout:
-            log("Output: " + stdout.decode("utf-8").strip())
-        if stderr:
-            log("Errori: " + stderr.decode("utf-8").strip())
-        time.sleep(delay)
+        try:
+            log(f"Esecuzione comando: {cmd}")
+            proc = subprocess.Popen(
+                cmd, 
+                shell=True, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE,
+                text=True  # Gestisce automaticamente la decodifica UTF-8
+            )
+            
+            # Imposta un timeout di 60 secondi per l'esecuzione del comando
+            try:
+                stdout, stderr = proc.communicate(timeout=60)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                log(f"ERRORE: Timeout nell'esecuzione del comando: {cmd}")
+                continue
+
+            # Controlla il codice di uscita
+            if proc.returncode != 0:
+                log(f"AVVISO: Comando fallito con codice {proc.returncode}: {cmd}")
+                if stderr:
+                    log(f"Errore: {stderr.strip()}")
+                # Continua con il prossimo comando invece di bloccarsi
+                continue
+
+            # Logga output solo se presente
+            if stdout:
+                log(f"Output: {stdout.strip()}")
+            
+            # Attendi il delay specificato
+            if delay > 0:
+                time.sleep(delay)
+
+        except Exception as e:
+            log(f"ERRORE CRITICO durante l'esecuzione di {cmd}: {str(e)}")
+            # Continua con il prossimo comando
+            continue
 
 def main():
     log("========== Avvio script di startup ==========")
