@@ -16,17 +16,17 @@ echo " nstallazione di Node.js e npm..."
 sudo apt install -y nodejs npm
 
 echo "Installazione dell'ultima versione di Node.js tramite NVM..."
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
 source ~/.bashrc
-nvm install node
+sudo nvm install node
 
 echo "installazione di Create React App..."
-npm install -g create-react-app
+sudo npm install -g create-react-app
 
 echo "Installazione di librerie aggiuntive per React..."
-npm install react-router-dom axios styled-components @shadcn/ui lucide-react recharts
+sudo npm install react-router-dom axios styled-components @shadcn/ui lucide-react recharts
 
 echo "assegno permessi a setupHotspot.sh..."
-sudo chmod +x setupHotspot.sh
+sudo chmod +x ~/setupHotspot.sh
 
 echo "Installazione completata!"
