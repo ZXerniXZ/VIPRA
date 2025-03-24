@@ -6,8 +6,8 @@ sudo apt update -y
 echo "Installazione delle dipendenze Python..."
 sudo apt install -y python3 python3-pip python3-venv
 
-echo "Installazione delle librerie Python necessarie..."
-pip3 install paho-mqtt opencv-python numpy picamera2
+echo "Installazione delle librerie Python tramite APT..."
+sudo apt install -y python3-paho-mqtt python3-opencv python3-numpy python3-picamera2
 
 echo "Installazione delle dipendenze per il Wi-Fi Hotspot..."
 sudo apt install -y hostapd dnsmasq dhcpcd5 iw iptables
