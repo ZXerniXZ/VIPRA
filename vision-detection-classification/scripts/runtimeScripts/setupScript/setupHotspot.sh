@@ -8,12 +8,6 @@ SUBNET="192.168.4.0"
 RANGE_START="192.168.4.2"
 RANGE_END="192.168.4.20"
 
-echo "🔹 Aggiornamento pacchetti..."
-sudo apt update && sudo apt upgrade -y
-
-echo "🔹 Installazione pacchetti necessari..."
-sudo apt install -y hostapd dnsmasq
-
 echo "🔹 Disattivazione temporanea dei servizi..."
 sudo systemctl stop hostapd
 sudo systemctl stop dnsmasq
