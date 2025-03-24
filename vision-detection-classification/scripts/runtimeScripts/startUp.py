@@ -51,20 +51,17 @@ commands_with_wait_online = [
 commands_with_wait_offline = [
     ("echo -e '\e[33mOFFLINE!, la scheda non tenterà di aggiornare il codice\e[0m'", 0),
     ("echo -e '\e[33mRUN codice principale...\e[0m'", 0),
-    ("echo -e '\e[34mInizializzazione server MQTT...\e[0m'", 0),
-    ("python3 setupScript/mqttStart.py", 5),
-    ("echo -e '\e[32mMQTT inizializzato\e[0m'", 0),
     ("python3 publishToMqtt.py", 5),
     ("echo -e '\e[35m publish to mqtt inizializzato\e[0m'", 0),
     ("sudo setupScript/setupHotspot.sh", 5),
-    ("echo -e '\e[35mcheckRete inizializzato\e[0m'", 0),
+    ("echo -e '\e[35msetup hotspot inizializzato\e[0m'", 0),
 ]
 
 def run_commands(commands):
     """Esegue ogni comando con gestione degli errori e logging."""
     for cmd, delay in commands:
         try:
-            log(f"Esecuzione comando: {cmd}")
+
             proc = subprocess.Popen(
                 cmd, 
                 shell=True, 
