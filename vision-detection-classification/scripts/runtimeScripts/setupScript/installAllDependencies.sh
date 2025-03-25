@@ -26,7 +26,7 @@ sudo npm install -g create-react-app
 echo "Installazione di librerie aggiuntive per React..."
 sudo npm install react-router-dom axios styled-components @shadcn/ui lucide-react recharts
 
-echo "assegno permessi a setupHotspot.sh..."
-sudo chmod +x ~/setupHotspot.sh
+echo "installo dependency imx500 camera"
+sudo apt install imx500-all
 
 echo "Installazione completata!"
