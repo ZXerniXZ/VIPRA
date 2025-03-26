@@ -1,36 +1,63 @@
-#Installazione su Raspberry Pi 4 (Fresh Setup)
+# pair device with github via ssh
 
-⚠️ **IMPORTANTE**  
-Le Raspberry Pi sono configurate per eseguire automaticamente gli script da questa sezione della repository all'avvio. **Non modificare il percorso degli script.**
+**eseguire le seguenti istruzioni sulla raspberry**
 
----
+attivare ssh:
 
-## Installazione su rasp fresh
+    $ sudo rasp-config
+    
+   interface option **>** ssh **>** yes
+   
+generare chiavi ssh per github:
 
-### **Esegui questi comandi in sequenza sulla tua Raspberry Pi 4**:
+    
+    $ ssh-keygen -t ed25519 -C "your_GitHub_Email"
+accettare le impostazioni standard .
 
-```bash
-# 1️⃣ Generare chiavi SSH per connessione sicura a GitHub
-ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+eliminare necessita pwd per sudo
 
-# 2️⃣ Clonare la repository nella directory /home
-cd /home
-git clone git@github.com:your-repo/projectDayProject.git
+    $ sudo visudo
 
-# 3️⃣ Aggiornare i pacchetti e installare Python
-sudo apt update
-sudo apt install python
+aggiungere sotto la voce "# user privilage specification" la riga:
 
-# 4️⃣ Verificare l’installazione di Python
-python --version
+    pX-XXX ALL=(ALL) NOPASSWD : ALL
 
-# 5️⃣ Installare le dipendenze
-pip install -r /home/usr/projectDayProject/software/parte-ai/dependency.txt
+**passare ora sul dispositivo host per la configurazione di nuova chiave ssh su github**
 
-# 6️⃣ Configurare un IP statico manualmente (IPv4: 192.168.1.100/24)
+una  volta creata la nuova chiave ssh sulla raspberry dobbiamo coppiarla sul nostro dispositivo, per fare ciò utilizzeremo il comando scp, dunque bisogna assicurarsi di essere sulla stessa rete della raspberry.
 
-# 7️⃣ Connettere la scheda a Internet tramite Ethernet e riavviare
-sudo reboot
+per verificare ciò:
 
-#verifica:
-se la scheda al reboot connessa ad internet dopo qualche minuto si spegne, il setup è avvenuto in modo corretto
+    $ ping indirizzo_ip_rasp
+
+di seguito:
+
+    scp px-xxx@indirizzo_ip_rasp:~/.ssh/id_ed25519.pub directory/locale
+una volta fatto ciò creare i permessi per una nuova chiave ssh sul github personale:
+
+profile **>** settings **>** ssh and GPG keys **>** new ssh key
+
+inserire la chiave appena coppiata dal dispositivo
+ 
+
+# pull and setup repo on rasp
+
+**eseguire le seguenti istruzioni sulla raspberry**
+
+pull repository, connessione ad internet necessaria
+
+    //pull repository on local machine
+    $ git clone git@github.com:nome_utente_github/projectDayProject.git
+    $ cd projectDayProject
+    $ git checkout prototipo1
+
+	//rendo eseguibili script di setup
+    $ sudo chmod +x ~/vision-detection-classification/scripts/runtimeScripts/setupScript/installAllDepenency.sh
+    $ sudo chmod +x ~/vision-detection-classification/scripts/runtimeScripts/setupScript/setupHotspot.sh
+	
+	//setup crontab per esecuzione all'avvio
+    $ crontab -e
+    
+all'ultima riga aggiungere:
+
+
