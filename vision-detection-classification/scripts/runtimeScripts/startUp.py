@@ -4,7 +4,7 @@ import time
 import os
 
 # Imposta il percorso del log sul Desktop (modifica se necessario)
-LOG_FILE = "/home/prototipo1/Desktop/startup.log"
+LOG_FILE = "/home/p1-001/Desktop/log.log"
 
 def log(message):
     """Scrive il messaggio sia sullo stdout che nel file di log."""
