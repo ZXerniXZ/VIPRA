@@ -51,9 +51,9 @@ commands_with_wait_online = [
 commands_with_wait_offline = [
     ("echo -e '\e[33mOFFLINE!, la scheda non tenterà di aggiornare il codice\e[0m'", 0),
     ("echo -e '\e[33mRUN codice principale...\e[0m'", 0),
-    ("python3 publishToMqtt.py", 5),
+    ("python3 /home/p1-001/Desktop/projectDayProject/vision-detection-classification/scripts/runtimeScripts/startUp.py", 5),
     ("echo -e '\e[35m publish to mqtt inizializzato\e[0m'", 0),
-    ("sudo setupScript/setupHotspot.sh", 5),
+    ("sudo /home/p1-001/Desktop/projectDayProject/vision-detection-classification/scripts/runtimeScripts/setupScript/setupHotspot.sh", 5),
     ("echo -e '\e[35msetup hotspot inizializzato\e[0m'", 0),
 ]
 
