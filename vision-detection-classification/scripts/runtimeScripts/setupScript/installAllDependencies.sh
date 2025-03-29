@@ -10,7 +10,7 @@ echo "Installazione delle librerie Python tramite APT..."
 sudo apt install -y python3-paho-mqtt python3-opencv python3-numpy python3-picamera2
 
 echo "Installazione delle dipendenze per il Wi-Fi Hotspot..."
-sudo apt install -y hostapd dnsmasq dhcpcd5 iw iptables
+sudo apt install -y hostapd dnsmasq dhcpcd5 iw iptables mosquitto
 
 echo " nstallazione di Node.js e npm..."
 sudo apt install -y nodejs npm
