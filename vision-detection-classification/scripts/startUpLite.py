@@ -106,7 +106,11 @@ def main():
         log("non online")
     else:
         #run_commands(commands_with_wait_online)
+<<<<<<< Updated upstream
         log("online")
+=======
+        log("online+")
+>>>>>>> Stashed changes
     log("========== Fine esecuzione script ==========")
 
 if __name__ == "__main__":
