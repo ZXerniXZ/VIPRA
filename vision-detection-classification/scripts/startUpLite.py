@@ -4,7 +4,7 @@ import time
 import os
 
 # Imposta il percorso del log sul Desktop (modifica se necessario)
-LOG_FILE = "/home/p1-001/Desktop/log.log"
+LOG_FILE = "~/Desktop/log.log"
 
 def log(message):
     """Scrive il messaggio sia sullo stdout che nel file di log."""
@@ -50,9 +50,9 @@ commands_with_wait_online = [
 commands_with_wait_offline = [
     ("echo -e '\e[33mOFFLINE!, la scheda non tenterà di aggiornare il codice\e[0m'", 0),
     ("echo -e '\e[33mRUN codice principale...\e[0m'", 0),
-    ("python3 /home/p1-001/projectDayProject/vision-detection-classification/scripts/runtimeScripts/startUp.py", 5),
+    ("python3 ~/projectDayProject/vision-detection-classification/scripts/runtimeScripts/startUp.py", 5),
     ("echo -e '\e[35m publish to mqtt inizializzato\e[0m'", 0),
-    ("sudo /home/p1-001/projectDayProject/vision-detection-classification/scripts/runtimeScripts/setupScript/setupHotspot.sh", 5),
+    ("sudo ~/projectDayProject/vision-detection-classification/scripts/runtimeScripts/setupScript/setupHotspot.sh", 5),
     ("echo -e '\e[35msetup hotspot inizializzato\e[0m'", 0),
 ]
 
