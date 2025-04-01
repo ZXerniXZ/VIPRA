@@ -23,33 +23,19 @@ def is_online():
         log(f"Errore nel controllo della connessione: {e}")
         return False
 
-def set_static_ip():
-    """Imposta un indirizzo IP statico su wlan0 o eth0 se non c'è connessione a Internet."""
-    interface = "eth0"  # Cambia in "wlan0" se usi Wi-Fi
-    static_ip = "192.168.1.100"
-    gateway = "192.168.1.1"
-    netmask = "255.255.255.0"
-
-    log(f"Nessuna connessione rilevata! Assegnando IP statico {static_ip} a {interface}...")
-
-    # Esegui comandi per impostare l'IP statico, redirigendo l'output (non visibile in cron)
-    subprocess.run(f"sudo ip addr flush dev {interface}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    subprocess.run(f"sudo ip addr add {static_ip}/{netmask} dev {interface}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    subprocess.run(f"sudo ip route add default via {gateway}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    log("IP statico impostato con successo.")
-
 # Lista di comandi con attesa, per il caso ONLINE
-commands_with_wait_online = [
+commands_online = [
     ("echo -e '\e[33mAggiornamento da public repo...\e[0m'", 0),
     ("cd projectDayProject && git pull", 10),
     ("sudo shutdown -h now", 0)
 ]
 
 # Lista di comandi con attesa, per il caso OFFLINE
-commands_with_wait_offline = [
+commands_offline = [
     ("echo -e '\e[33mOFFLINE!, la scheda non tenterà di aggiornare il codice\e[0m'", 0),
     ("echo -e '\e[33mRUN codice principale...\e[0m'", 0),
+    ("sudo ~/projectDayProject/vision-detection-classification/scripts/runtimeScripts/setupScript/setupIP.sh", 5),
+    ("echo -e '\e[35m publish to mqtt inizializzato\e[0m'", 0),
     ("python3 ~/projectDayProject/vision-detection-classification/scripts/runtimeScripts/startUp.py", 5),
     ("echo -e '\e[35m publish to mqtt inizializzato\e[0m'", 0),
     ("sudo ~/projectDayProject/vision-detection-classification/scripts/runtimeScripts/setupScript/setupHotspot.sh", 5),
@@ -60,7 +46,6 @@ def run_commands(commands):
     """Esegue ogni comando con gestione degli errori e logging."""
     for cmd, delay in commands:
         try:
-
             proc = subprocess.Popen(
                 cmd, 
                 shell=True, 
@@ -101,12 +86,11 @@ def run_commands(commands):
 def main():
     log("========== Avvio script di startup ==========")
     if not is_online():
-        #set_static_ip()  # Imposta IP statico se offline
-        #run_commands(commands_with_wait_offline)
         log("non online")
+        run_commands(commands_offline)
     else:
-        #run_commands(commands_with_wait_online)
-        log("online+")
+        log("online")
+        run_commands(commands_online)
     log("========== Fine esecuzione script ==========")
 
 if __name__ == "__main__":
