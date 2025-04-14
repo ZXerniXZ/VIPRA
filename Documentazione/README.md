@@ -9,4 +9,4 @@ Documentazione/relazione metodologie per il rilevamento di pericoli --> https://
 --------------------------------------------------------------------------------------------------------------------------------------------------------
 DOCUMENTAZIONE Jendoubi --> https://docs.google.com/document/d/1Mwb4JygMTm1dl4Pgsnpnvh14WHRmITc6jAFtm3sOS3g/edit?tab=t.0
 
-Ducumentazione sulla definizione e istallazione di un MQTT ---> https://docs.google.com/document/d/1GPbCngVGKb_0MWgGHuxi71WAsIAZu6YXF0GkwK6fw7Q/edit?tab=t.0
+Documentazione sulla definizione e istallazione di un MQTT ---> https://docs.google.com/document/d/1GPbCngVGKb_0MWgGHuxi71WAsIAZu6YXF0GkwK6fw7Q/edit?tab=t.0
