@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pillow
+moondream==0.0.6
+onnxruntime
+python-multipart
+requests

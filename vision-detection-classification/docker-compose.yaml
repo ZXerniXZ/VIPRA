@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  # ─────────── Ollama (LLM server) ───────────
+  ollama:
+    image: ollama/ollama:latest          # multi-arch, userland AMD64
+    platform: linux/amd64
+    ports:
+      - "11435:11434"                    # host 11435 → container 11434
+    volumes:
+      - ./ollama/ollama_data:/root/.ollama    # cartella locale invece del volume Docker
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]    # esce 0 quando il server è pronto
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────── FastAPI + Moondream ───────────
+  serverai:
+    build:
+      context: .                         # root del progetto (vede tutto)
+      dockerfile: serverAI/Dockerfile
+    platform: linux/amd64
+    mem_limit: 5g                # limite di memoria per il container
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+    ports:
+      - "8002:8000"                      # API pubblica
+    restart: unless-stopped
+    volumes:
+      - ./serverAI/uploads:/app/uploads  # cartella per i file upload
+
+  # ─────────── Mosquitto (MQTT broker) ───────────
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    ports:
+      - "1883:1883"                      # MQTT
+      - "9001:9001"                      # WebSocket
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    stdin_open: true
+    tty: true
