@@ -13,7 +13,7 @@ import moondream as md
 import uvicorn
 
 # --------------------- configurazione ---------------------
-MODEL_PATH = Path("models/moondream-2b-int8.mf")
+MODEL_PATH = Path("model/moondream-2b-int8.mf")
 LLM_NAME   = "gemma3:1b"
 MAX_TOKENS = 64
 LLM_TOKENS = 16
@@ -38,7 +38,7 @@ try:
 except FileNotFoundError as e:
     print(f"[ERROR] {str(e)}")
     print("Per favore scarica il modello da: https://huggingface.co/vikhyatk/moondream2/resolve/main/moondream-2b-int8.mf")
-    print("E posizionalo in: ./models/moondream-2b-int8.mf")
+    print("E posizionalo in: ./model/moondream-2b-int8.mf")
     exit(1)
 except Exception as e:
     print(f"[ERROR] Errore critico nell'inizializzazione: {str(e)}")
