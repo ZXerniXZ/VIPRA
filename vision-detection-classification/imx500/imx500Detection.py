@@ -9,6 +9,7 @@ import signal
 import subprocess
 from functools import lru_cache
 import paho.mqtt.client as mqtt
+import os  # Importa os per gestire le directory
 
 # Importa le librerie per la fotocamera e il modello
 from picamera2 import Picamera2
@@ -80,12 +81,12 @@ def get_args():
     parser.add_argument("--threshold", type=float, default=0.55, help="Soglia per le rilevazioni")
     parser.add_argument("--iou", type=float, default=0.65, help="Soglia IOU")
     parser.add_argument("--max-detections", type=int, default=10, help="Numero massimo di rilevazioni")
-    # Argomenti per MQTT: topic separati per detection, framerate e status
     parser.add_argument("--mqtt-host", type=str, default="localhost", help="Hostname del broker MQTT")
     parser.add_argument("--mqtt-port", type=int, default=1883, help="Porta del broker MQTT")
     parser.add_argument("--mqtt-detection-topic", type=str, default="imx500/detection", help="Topic per i dati di rilevamento")
     parser.add_argument("--mqtt-framerate-topic", type=str, default="imx500/framerate", help="Topic per il framerate")
     parser.add_argument("--mqtt-status-topic", type=str, default="imx500/status", help="Topic per lo stato (online/offline)")
+    parser.add_argument("--output-dir", type=str, default="frames", help="Directory in cui salvare i frame rilevati")  # Nuovo argomento
     return parser.parse_args()
 
 def signal_handler(sig, frame):
@@ -97,6 +98,16 @@ def signal_handler(sig, frame):
         mqtt_client.loop_stop()
     print("Ricevuto segnale di terminazione. Uscita...")
     sys.exit(0)
+
+# Aggiungi questa funzione per salvare i frame
+def save_frame(frame, output_dir="frames", prefix="frame"):
+    """Salva il frame in una directory specificata."""
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)  # Crea la directory se non esiste
+    timestamp = int(time.time() * 1000)  # Timestamp unico per il nome del file
+    filename = os.path.join(output_dir, f"{prefix}_{timestamp}.jpg")
+    cv2.imwrite(filename, frame)
+    print(f"[INFO] Frame salvato: {filename}")
 
 def main():
     global mqtt_client, args
@@ -156,6 +167,11 @@ def main():
                 "confidence": float(f"{d.conf:.2f}"),
                 "box": [x, y, w, h]
             })
+
+        # Salva il frame se ci sono rilevamenti
+        if detections:
+            frame = picam2.capture_array()  # Cattura l'intero frame come array
+            save_frame(frame, output_dir=args.output_dir, prefix="detection")
 
         # Pubblica separatamente i dati di rilevamento, il framerate e lo stato "online"
         if mqtt_client:
