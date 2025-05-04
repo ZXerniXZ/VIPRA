@@ -13,7 +13,7 @@ import moondream as md
 import uvicorn
 
 # --------------------- configurazione ---------------------
-MODEL_PATH = Path("model/moondream-2b-int8.mf")
+MODEL_PATH = Path("/app/model/moondream-2b-int8.mf")
 LLM_NAME   = "gemma3:1b"
 MAX_TOKENS = 64
 LLM_TOKENS = 16

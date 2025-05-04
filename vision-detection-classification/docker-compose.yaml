@@ -4,7 +4,7 @@ services:
   # ─────────── Ollama (LLM server) ───────────
   ollama:
     image: ollama/ollama:latest          # multi-arch, userland AMD64 !!da trovare/creare un immagine più lite
-    platform: linux/amd64
+    platform: linux/arm64
     ports:
       - "11435:11434"                    # host 11435 → container 11434
     volumes:
@@ -20,9 +20,9 @@ services:
   # ─────────── FastAPI + Moondream ───────────
   serverai:
     build:
-      context: .                         # root del progetto (vede tutto)
+      context: .
       dockerfile: serverAI/Dockerfile
-    platform: linux/amd64
+    platform: linux/arm64
     mem_limit: 5g                # limite di memoria per il container
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
