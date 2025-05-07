@@ -1,28 +1,24 @@
-# Dockerfile per IMX500 object detection via Picamera2 + MQTT
+FROM debian:bookworm-slim
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PIP_BREAK_SYSTEM_PACKAGES=1         
+# <‑‑ abilita pip nei post‑install
 
-FROM --platform=linux/arm64 python:3.12-slim AS base
+RUN apt-get update && apt-get install -y wget gnupg ca-certificates \
+ && echo "deb http://archive.raspberrypi.com/debian/ bookworm main" \
+        > /etc/apt/sources.list.d/raspi.list \
+ && wget -qO - https://archive.raspberrypi.com/debian/raspberrypi.gpg.key \
+        | gpg --dearmor -o /etc/apt/trusted.gpg.d/raspberrypi.gpg
 
-# 1) Dipendenze di sistema per Picamera2 e OpenCV
-RUN apt-get update -qq && apt-get install -y --no-install-recommends \
-        build-essential wget ca-certificates \
-        libatlas-base-dev libjpeg-dev libtiff5-dev libturbojpeg0-dev \
-        libv4l-dev v4l-utils libopenjp2-7-dev libexif-dev \
-        libcamera-apps python3-opencv python3-picamera2 \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-pip \
+        python3-opencv python3-picamera2 imx500-all \
+        python3-paho-mqtt \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 2) Variabili ambiente Python
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
-
-# 3) Installa dipendenze Python
 WORKDIR /app
-COPY requirements.txt /app/requirements.txt
-RUN pip install --upgrade pip && \
-    pip install -r /app/requirements.txt
+COPY imx500.py /app/
 
-# 4) Copia il codice dell'applicazione
-COPY . /app
+ENTRYPOINT ["python3", "/app/imx500.py"]
 
-# 5) Entry point
-ENTRYPOINT ["python3", "main.py"]
+CMD ["--model", "/usr/share/imx500-models/imx500_network_efficientdet_lite0_pp.rpk", "--broker", "localhost", "--topic", "ai/camera", "--max-boxes", "1"]
+
