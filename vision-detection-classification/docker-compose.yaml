@@ -3,15 +3,15 @@ version: "3.9"
 services:
   # ─────────── Ollama (LLM server) ───────────
   ollama:
-    image: ollama/ollama:latest          # multi-arch, userland AMD64 !!da trovare/creare un immagine più lite
+    image: ollama/ollama:latest
     platform: linux/arm64
     ports:
-      - "11435:11434"                    # host 11435 → container 11434
+      - "11435:11434"
     volumes:
-      - ./volumes/ollama/ollama_data:/root/.ollama    # cartella locale invece del volume Docker
+      - ./volumes/ollama/ollama_data:/root/.ollama
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "ollama", "list"]    # esce 0 quando il server è pronto
+      test: ["CMD", "ollama", "list"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -23,25 +23,25 @@ services:
       context: .
       dockerfile: serverAI/Dockerfile
     platform: linux/arm64
-    mem_limit: 5g                # limite di memoria per il container
+    mem_limit: 5g
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
     depends_on:
       ollama:
         condition: service_healthy
     ports:
-      - "8002:8000"                      # API pubblica
+      - "8002:8000"
     restart: unless-stopped
     volumes:
-      - ./volumes/model:/app/model  # cartella per i file upload
+      - ./volumes/model:/app/model
 
   # ─────────── Mosquitto (MQTT broker) ───────────
   mosquitto:
     image: eclipse-mosquitto
     container_name: mosquitto
     ports:
-      - "1883:1883"                      # MQTT
-      - "9001:9001"                      # WebSocket
+      - "1883:1883"
+      - "9001:9001"
     restart: unless-stopped
     volumes:
       - ./volumes/mosquitto/config:/mosquitto/config
@@ -49,3 +49,44 @@ services:
       - ./volumes/mosquitto/log:/mosquitto/log
     stdin_open: true
     tty: true
+
+  # ─────────── IMX500 AI Camera publisher ───────────
+  imx500:
+    build:
+      context: .
+      dockerfile: imx500/Dockerfile   # o il path relativo al Dockerfile che hai scritto
+    image: imx500
+    platform: linux/arm64
+    privileged: true
+    network_mode: host
+    depends_on:
+      mosquitto:
+        condition: service_started
+    restart: unless-stopped
+    # monta i mountpoint necessari per libcamera & IMX500
+    volumes:
+      - ./volumes/imx500-captures:/app/captures
+      - /run/udev:/run/udev:ro
+      - /lib/firmware:/lib/firmware:ro
+      - /sys/kernel/debug:/sys/kernel/debug:ro
+      - /dev/dma_heap:/dev/dma_heap:ro  
+    # ENTRYPOINT definito in Dockerfile; qui passiamo solo gli argomenti
+    command:
+      - --model
+      - /usr/share/imx500-models/imx500_network_efficientdet_lite0_pp.rpk
+      - --broker
+      - localhost
+      - --topic
+      - ai/camera
+      - --savedir
+      - /app/captures
+      - --threshold
+      - "0.4"
+      - --max-boxes
+      - "0"
+      - --classes
+      - "0"
+      - --iou-threshold
+      - "0.5"
+      - --loglevel
+      - INFO

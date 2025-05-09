@@ -1,6 +1,11 @@
+#!/usr/bin/env python3
 """
 FastAPI + Moondream 2-B int8 + Gemma 3 1-B via Ollama
 Ottimizzato per Raspberry Pi 5.
+Aggiunta pubblicazione dello status su MQTT (localhost:8003):
+  - "idle" quando il server è pronto e non elabora
+  - "processing" durante l'elaborazione di /analyze
+  - "offline" allo shutdown
 """
 
 import os, time, requests
@@ -11,13 +16,20 @@ from fastapi.responses import JSONResponse
 from PIL import Image
 import moondream as md
 import uvicorn
+import paho.mqtt.client as mqtt
 
 # --------------------- configurazione ---------------------
-MODEL_PATH = Path("/app/model/moondream-2b-int8.mf")
-LLM_NAME   = "gemma3:1b"
-MAX_TOKENS = 64
-LLM_TOKENS = 16
-OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+MODEL_PATH   = Path("/app/model/moondream-2b-int8.mf")
+LLM_NAME     = "gemma3:1b"
+MAX_TOKENS   = 64
+LLM_TOKENS   = 16
+OLLAMA_URL   = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+
+# MQTT status
+STATUS_BROKER = "localhost"
+STATUS_PORT   = 8003
+STATUS_TOPIC  = "service/status"
+status_client: mqtt.Client
 
 os.environ.setdefault("OMP_NUM_THREADS", "4")
 os.environ.setdefault("OMP_WAIT_POLICY", "PASSIVE")
@@ -26,19 +38,12 @@ os.environ.setdefault("OMP_WAIT_POLICY", "PASSIVE")
 try:
     if not MODEL_PATH.exists():
         raise FileNotFoundError(f"Moondream checkpoint mancante: {MODEL_PATH}")
-
     print("[Server] Loading Moondream …")
-    try:
-        print("caricamento")
-        VL = md.vl(model=str(MODEL_PATH))
-        print("  ↳ Moondream caricato con successo\n")
-    except Exception as e:
-        raise RuntimeError(f"Errore nel caricamento del modello Moondream: {str(e)}")
-
+    VL = md.vl(model=str(MODEL_PATH))
+    print("  ✓ Moondream caricato con successo\n")
 except FileNotFoundError as e:
     print(f"[ERROR] {str(e)}")
     print("Per favore scarica il modello da: https://huggingface.co/vikhyatk/moondream2/resolve/main/moondream-2b-int8.mf")
-    print("E posizionalo in: ./model/moondream-2b-int8.mf")
     exit(1)
 except Exception as e:
     print(f"[ERROR] Errore critico nell'inizializzazione: {str(e)}")
@@ -59,40 +64,34 @@ def run_gemma(prompt: str) -> str:
         "model":  LLM_NAME,
         "prompt": prompt,
         "stream": False,
-        "options": {
-            "num_predict": LLM_TOKENS,
-            "temperature": 0.2
-        }
+        "options": {"num_predict": LLM_TOKENS, "temperature": 0.2}
     }
     try:
         resp = requests.post(url, json=payload, timeout=60)
         resp.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        # 502 Bad Gateway dal tuo server → Ollama ha risposto male
-        raise HTTPException(
-            status_code=502,
-            detail=f"Ollama HTTP {resp.status_code}: {resp.text}"
-        ) from e
+        raise HTTPException(502, f"Ollama HTTP {resp.status_code}: {resp.text}") from e
     except requests.exceptions.RequestException as e:
-        # timeout, connessione rifiutata, DNS fallito…
-        raise HTTPException(
-            status_code=502,
-            detail=f"Errore di rete verso Ollama: {e}"
-        ) from e
-
+        raise HTTPException(502, f"Errore di rete verso Ollama: {e}") from e
     data = resp.json()
-    # In tutte le versioni /api/generate restituisce "response"
     if "response" not in data:
-        # log completo per debug
-        raise HTTPException(
-            status_code=502,
-            detail=f"Ollama response malformato: {data}"
-        )
+        raise HTTPException(502, f"Ollama response malformato: {data}")
     return data["response"].strip()
-
 
 # ---------------------- FastAPI ---------------------------
 app = FastAPI(title="Moondream Safety-Check API", version="1.0")
+
+@app.on_event("startup")
+async def on_startup():
+    global status_client
+    status_client = mqtt.Client("moondream-status")
+    status_client.connect(STATUS_BROKER, STATUS_PORT, keepalive=60)
+    status_client.publish(STATUS_TOPIC, "idle")
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    status_client.publish(STATUS_TOPIC, "offline")
+    status_client.disconnect()
 
 @app.get("/ping")
 async def ping():
@@ -105,34 +104,37 @@ async def ping():
 
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
-    if file.content_type not in {"image/jpeg", "image/png", "image/webp"}:
-        raise HTTPException(415, "File must be an image")
+    # segnalo processing
+    status_client.publish(STATUS_TOPIC, "processing")
 
+    if file.content_type not in {"image/jpeg", "image/png", "image/webp"}:
+        status_client.publish(STATUS_TOPIC, "idle")
+        raise HTTPException(415, "File must be an image")
     raw = await file.read()
     try:
         img = Image.open(BytesIO(raw)).convert("RGB")
     except Exception:
+        status_client.publish(STATUS_TOPIC, "idle")
         raise HTTPException(400, "Invalid image data")
-
     t0 = time.perf_counter()
     enc = VL.encode_image(img)
     caption = VL.caption(enc, length="short", settings={"max_tokens": MAX_TOKENS})["caption"]
     tc = time.perf_counter()
-
     verdict = run_gemma(build_prompt(caption))
     tr = time.perf_counter()
 
-    return JSONResponse(
-        {
-            "caption": caption,
-            "verdict": verdict,
-            "latency": {
-                "encode_sec": round(tc - t0, 3),
-                "llm_sec":    round(tr - tc, 3),
-                "total_sec":  round(tr - t0, 3),
-            },
-        }
-    )
+    # torno a idle
+    status_client.publish(STATUS_TOPIC, "idle")
+
+    return JSONResponse({
+        "caption": caption,
+        "verdict": verdict,
+        "latency": {
+            "encode_sec": round(tc - t0, 3),
+            "llm_sec":    round(tr - tc, 3),
+            "total_sec":  round(tr - t0, 3),
+        },
+    })
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)

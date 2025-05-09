@@ -16,9 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY imx500.py /app/
+COPY imx500/imx500Detection.py /app/
 
-ENTRYPOINT ["python3", "/app/imx500.py"]
+ENTRYPOINT ["python3", "/app/imx500Detection.py"]
 
 CMD ["--model", "/usr/share/imx500-models/imx500_network_efficientdet_lite0_pp.rpk", "--broker", "localhost", "--topic", "ai/camera", "--max-boxes", "1"]
 

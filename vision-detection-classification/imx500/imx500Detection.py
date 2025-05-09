@@ -4,9 +4,10 @@ imx500.py
 ──────────────────────────────────────────────────────────────────────────────
 Esegue inferenza on-sensor con la Raspberry Pi AI Camera (Sony IMX500) su
 Raspberry Pi 5: pubblica i risultati via MQTT e salva snapshot. Gestisce:
-  • --threshold   soglia di confidenza
-  • --max-boxes   massimo bounding-box per frame
-  • --iou-threshold  pubblicazione singola per oggetto finché rimane in scena
+  • --threshold     soglia di confidenza
+  • --max-boxes     massimo bounding-box per frame
+  • --iou-threshold pubblicazione singola per oggetto finché rimane in scena
+  • --classes       lista di classi da includere (solo queste verranno pubblicate)
 
 USO
 ────
@@ -15,7 +16,7 @@ USO
         --broker   192.168.1.10 \
         --topic    ai/camera \
         --savedir  captures \
-        [--threshold 0.4] [--max-boxes 0] [--iou-threshold 0.5] [--loglevel INFO]
+        [--threshold 0.4] [--max-boxes 0] [--iou-threshold 0.5] [--classes 0 1 2] [--loglevel INFO]
 
 Opzioni:
     --model           Percorso al file .rpk del modello (obbligatorio)
@@ -24,9 +25,10 @@ Opzioni:
     --topic           Topic MQTT (default: imx500/detections)
     --user            Username MQTT (opzionale)
     --password        Password MQTT (opzionale)
-    --threshold       Soglia di confidenza (0–1, default 0.4)
+    --threshold       Soglia di confidenza (0–1, default: 0.4)
     --max-boxes       Numero massimo di box per frame (0 = illimitato)
-    --iou-threshold   Soglia IoU per matching oggetti (default 0.5)
+    --iou-threshold   Soglia IoU per matching oggetti (default: 0.5)
+    --classes         Lista di classi (ID) da includere (default: tutte)
     --savedir         Directory per snapshot (default: captures)
     --loglevel        Livello log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 
@@ -89,6 +91,8 @@ def main() -> None:
     parser.add_argument("--threshold",    type=float, default=0.4)
     parser.add_argument("--max-boxes",    type=int,   default=0)
     parser.add_argument("--iou-threshold",type=float, default=0.5)
+    parser.add_argument("--classes",      type=int,   nargs='+', default=None,
+                        help="Lista di classi (ID) da includere")
     parser.add_argument("--savedir",      default="captures")
     parser.add_argument("--loglevel",     default="INFO",
         choices=["DEBUG","INFO","WARNING","ERROR","CRITICAL"])
@@ -108,8 +112,7 @@ def main() -> None:
 
     # mqtt
     mqttc = connect_mqtt(args.broker, args.port, args.user, args.password)
-    logging.info("MQTT connected %s:%d topic='%s'",
-                 args.broker, args.port, args.topic)
+    logging.info("MQTT connected %s:%d topic='%s'", args.broker, args.port, args.topic)
 
     # stato oggetti attivi
     active: list[tuple[int, float, float, float, float]] = []
@@ -119,14 +122,9 @@ def main() -> None:
 
     while running:
         # cattura inferenza
-        req = picam2.capture_request()
-        frame = req.make_array("main")
-        meta  = req.get_metadata()
-        req.release()
-
+        req = picam2.capture_request(); frame = req.make_array("main"); meta = req.get_metadata(); req.release()
         outputs = imx.get_outputs(meta)
-        if outputs is None:
-            continue
+        if outputs is None: continue
         boxes, scores, classes, *_ = outputs
         boxes   = np.asarray(boxes).reshape(-1,4)
         scores  = np.asarray(scores).reshape(-1)
@@ -136,12 +134,11 @@ def main() -> None:
         dets: list[tuple[int, float, float, float, float, float]] = []
         for box, score, cls in zip(boxes, scores, classes):
             if score < args.threshold: continue
-            x1, y1, w, h = box
-            x2, y2 = x1 + w, y1 + h
+            if args.classes is not None and cls not in args.classes: continue
+            x1, y1, w, h = box; x2, y2 = x1+w, y1+h
             dets.append((int(cls), x1, y1, x2, y2, float(score)))
         dets.sort(key=lambda x: x[5], reverse=True)
-        if args.max_boxes > 0:
-            dets = dets[: args.max_boxes]
+        if args.max_boxes > 0: dets = dets[:args.max_boxes]
 
         # identifica nuovi oggetti
         new_objs: list[tuple[int, float, float, float, float, float]] = []
@@ -149,44 +146,28 @@ def main() -> None:
             cls, x1, y1, x2, y2, score = det
             found = False
             for ac in active:
-                if ac[0] == cls and iou(ac[1:], (x1, y1, x2, y2)) >= args.iou_threshold:
-                    found = True; break
-            if not found:
-                new_objs.append(det)
+                if ac[0]==cls and iou(ac[1:],(x1,y1,x2,y2))>=args.iou_threshold:
+                    found=True; break
+            if not found: new_objs.append(det)
 
-        # aggiorna active con detections attuali
-        active = [(cls, x1, y1, x2, y2) for cls, x1, y1, x2, y2, _ in dets]
+        # aggiorna active
+        active = [(cls,x1,y1,x2,y2) for cls,x1,y1,x2,y2,_ in dets]
 
         if new_objs:
-            # prepara payload JSON
-            payload = []
-            for cls, x1, y1, x2, y2, score in new_objs:
-                payload.append({
-                    "cls": cls,
-                    "score": round(score, 3),
-                    "bbox": [int(x1), int(y1), int(x2 - x1), int(y2 - y1)]
-                })
-            mqttc.publish(
-                args.topic,
-                json.dumps({"ts": time.time(), "detections": payload}),
-                qos=0
-            )
+            payload=[]
+            for cls,x1,y1,x2,y2,score in new_objs:
+                payload.append({"cls":cls,"score":round(score,3),"bbox":[int(x1),int(y1),int(x2-x1),int(y2-y1)]})
+            mqttc.publish(args.topic,json.dumps({"ts":time.time(),"detections":payload}),qos=0)
             mqttc.loop(0)
-
-            # salva snapshot
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
-            img = frame[..., :3]
-            path = Path(args.savedir) / f"{ts}.jpg"
-            cv2.imwrite(str(path), img)
-            logging.debug("Published %d new objects, saved %s", len(new_objs), path)
+            ts=datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
+            img=frame[...,:3]; cv2.imwrite(f"{args.savedir}/{ts}.jpg",img)
+            logging.debug("Published %d new objects, saved %s",len(new_objs),ts)
 
     logging.info("Stopping…")
-    picam2.stop()
-    mqttc.disconnect()
+    picam2.stop(); mqttc.disconnect()
 
-if __name__ == "__main__":
-    try:
-        main()
+if __name__=="__main__":
+    try: main()
     except Exception:
         logging.exception("Unhandled error, exiting")
         sys.exit(1)
