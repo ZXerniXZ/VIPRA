@@ -60,10 +60,10 @@ void setupSeriale() {
   Serial.println("\n[SERIAL SETUP] Inizializzazione porte seriali...");
 
   Serial1.setTimeout(100); 
-  Serial1.begin(230400, SERIAL_8N1, RXp1, -1);
+  Serial1.begin(74880, SERIAL_8N1, RXp1, -1);
 
   Serial2.setTimeout(100); 
-  Serial2.begin(230400, SERIAL_8N1, -1, TXp2);
+  Serial2.begin(74880, SERIAL_8N1, -1, TXp2);
 
   Serial.println("[SERIAL SETUP] Porte seriali inizializzate");
 
@@ -93,23 +93,28 @@ void setupMQTT() {
 
   Serial.println("[MQTT SETUP] Ping al server in corso...");
 
-  do{
+  while(true){
     if (Ping.ping(IPAddress(192,168,1,100))) {
       Serial.println("[MQTT SETUP] Server raggiungibile");
 
       mqtt.subscribe(MQTT_TOPIC_A, [](const char* topic, const char* payload) {
         
         Serial.printf("[MQTT] Ricevuto: %s\n", payload);
-        scriviMessaggioCoda(payload, codaOUT);
+        
+        char messaggio[DIMENSIONE_MASSIMA_MESSAGGIO];
+        strcpy(messaggio, payload);
+        scriviMessaggioCoda(messaggio, codaOUT);
 
       });
 
       Serial.println("[MQTT SETUP] Subscribe al server fatto");
 
+      break;
+
     } else {
       Serial.println("[MQTT SETUP] ERR: Server non raggiungibile");
     }
-  }while(!Ping.ping(IPAddress(192,168,1,100)));
+  }
 
   Serial.println("[MQTT SETUP] Setup MQTT completato\n");
 
@@ -120,15 +125,15 @@ void setupTasks() {
   Serial.println("[RTOS SETUP] Creazione tasks...");
 
   xTaskCreatePinnedToCore(
-    serialReceiveTask, "SerialRx", 16384, NULL, 2, &xSerialReceiveHandle, 0)
+    serialReceiveTask, "SerialRx", 40960, NULL, 2, &xSerialReceiveHandle, 0)
   ;
 
   xTaskCreatePinnedToCore(
-    serialSendTask, "SerialTx", 16384, NULL, 2, &xSerialSendHandle, 1)
+    serialSendTask, "SerialTx", 40960, NULL, 2, &xSerialSendHandle, 1)
   ;
   
   xTaskCreatePinnedToCore(
-    mqttTask, "MQTT", 16384, NULL, 3, &xMqttHandle, 1)
+    mqttTask, "MQTT", 20480, NULL, 3, &xMqttHandle, 1)
   ;
   
   xTaskCreatePinnedToCore(
@@ -145,31 +150,32 @@ void setupTasks() {
 
 bool riceviDatiSeriale(char* destinationBuffer, size_t max_len) {
 
-  String bufferMessaggi;
-  
-  while (Serial1.available()) {
+  int dimensioneMessaggio = 0;
 
-    char carattereCorrente = Serial1.read();
+  if(Serial1.available()){
     
-    if (carattereCorrente == '\n' && bufferMessaggi.length() > 0) {
-      
-      strncpy(destinationBuffer, bufferMessaggi.c_str(), max_len - 1);
-      destinationBuffer[max_len - 1] = '\0';
-      
-      bufferMessaggi = "";
-      return true;
-      
-    } else {
+    char bufferMessaggi[max_len];
 
-      if (bufferMessaggi.length() >= max_len - 1) {
+    while (Serial1.available()) {
+
+      char carattereCorrente = Serial1.read();
+
+      bufferMessaggi[dimensioneMessaggio++] = carattereCorrente;
+
+      if (dimensioneMessaggio >= max_len - 1) {
         Serial.println("[SERIAL] ERR: Messaggio troppo lungo");
-        bufferMessaggi = "";
+        memset(bufferMessaggi, 0, max_len);
+
         return false;
-      }else bufferMessaggi += carattereCorrente; 
-      
+      }
     }
-  }
-  return false;
+
+    bufferMessaggi[dimensioneMessaggio -1] = '\0';
+    strcpy(destinationBuffer, bufferMessaggi);
+
+    return true;
+
+  }else return false;
 }
 
 bool scriviMessaggioCoda(const char* messaggio, QueueHandle_t coda) {
@@ -213,10 +219,15 @@ void serialReceiveTask(void* parameter) {
 
 void serialSendTask(void* parameter) {
 
+  String messaggio;
+
   for(;;){
 
-    if(leggiMessaggioCoda(codaOUT)){
-      Serial2.println(leggiMessaggioCoda(codaOUT));
+    messaggio = leggiMessaggioCoda(codaOUT);
+
+    if(messaggio.length()>=1){
+      Serial2.println(messaggio);
+      Serial.printf("[SERIAL] Messaggio inviato in seriale: %s\n", messaggio.c_str());
     }
 
   }
@@ -228,8 +239,10 @@ void mqttTask(void* parameter) {
 
     mqtt.loop();
 
-    if(leggiMessaggioCoda(codaIN)){
-      mqtt.publish(MQTT_TOPIC_B, leggiMessaggioCoda(codaIN));
+    String messaggio = leggiMessaggioCoda(codaIN);
+
+    if(messaggio.length() > 1) {
+        mqtt.publish(MQTT_TOPIC_B, messaggio);
     }
 
     if (!mqtt.connected()) {
@@ -259,9 +272,9 @@ void loop() {
   static uint32_t last = 0;
 
   if (millis() - last > 30000) {
-    Serial.printf("[SYS] Heap: %d | Min: %d\n", 
-                 ESP.getFreeHeap(),
-                 esp_get_minimum_free_heap_size());
+    
+    Serial.printf("[SYS] Heap: %d | Min: %d\n", ESP.getFreeHeap(), esp_get_minimum_free_heap_size());
+
     last = millis();
   }
   delay(100);
