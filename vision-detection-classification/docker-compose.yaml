@@ -29,12 +29,28 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
+      mosquitto:
+        condition: service_healthy
     ports:
       - "8002:8000"
     restart: unless-stopped
     volumes:
       - ./volumes/model:/app/model
-
+    command:
+      - --result-topic
+      - resoults/resoult
+      - --model
+      - /app/model/moondream-2b-int8.mf
+      - --status-broker
+      - mosquitto        # o l’hostname del tuo broker
+      - --status-port
+      - "1883"
+      - --status-topic
+      - serverai/status
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
   # ─────────── Mosquitto (MQTT broker) ───────────
   mosquitto:
     image: eclipse-mosquitto
@@ -49,28 +65,33 @@ services:
       - ./volumes/mosquitto/log:/mosquitto/log
     stdin_open: true
     tty: true
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 1883"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 10s
 
   # ─────────── IMX500 AI Camera publisher ───────────
   imx500:
     build:
       context: .
-      dockerfile: imx500/Dockerfile   # o il path relativo al Dockerfile che hai scritto
+      dockerfile: imx500/Dockerfile
     image: imx500
     platform: linux/arm64
     privileged: true
     network_mode: host
     depends_on:
       mosquitto:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
-    # monta i mountpoint necessari per libcamera & IMX500
     volumes:
       - ./volumes/imx500-captures:/app/captures
       - /run/udev:/run/udev:ro
       - /lib/firmware:/lib/firmware:ro
       - /sys/kernel/debug:/sys/kernel/debug:ro
-      - /dev/dma_heap:/dev/dma_heap:ro  
-    # ENTRYPOINT definito in Dockerfile; qui passiamo solo gli argomenti
+      - /dev/dma_heap:/dev/dma_heap:ro
+    # ENTRYPOINT è definito nel Dockerfile; qui passiamo gli argomenti allo script
     command:
       - --model
       - /usr/share/imx500-models/imx500_network_efficientdet_lite0_pp.rpk
@@ -88,5 +109,7 @@ services:
       - "0"
       - --iou-threshold
       - "0.5"
+      # - --save-images
+      # - true
       - --loglevel
       - INFO
