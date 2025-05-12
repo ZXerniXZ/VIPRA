@@ -16,8 +16,8 @@
 #define mqttPort 9000
 #define mqttHost "192.168.1.100"
 #define DIMENSIONE_MASSIMA_MESSAGGIO 2048
-#define MQTT_TOPIC_A "imx500/detections"
-#define MQTT_TOPIC_B "imx500/messages"
+#define MQTT_TOPIC_A "serverai/result"
+#define MQTT_TOPIC_B "communication/messages"
 
 /////////////////////////////
 //    VARIABILI GLOBALI    //
