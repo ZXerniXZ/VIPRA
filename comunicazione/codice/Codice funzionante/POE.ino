@@ -5,7 +5,7 @@
 #include <freertos/queue.h>
 #include <ESPping.h>
 
-#define RXp1 2
+#define RXp1 36
 #define TXp2 4
 
 
@@ -14,10 +14,10 @@
 ////////////////////
 
 #define mqttPort 9000
-#define mqttHost "192.168.1.100"
+#define mqttHost "192.168.1.101"
 #define DIMENSIONE_MASSIMA_MESSAGGIO 2048
-#define MQTT_TOPIC_A "imx500/detections"
-#define MQTT_TOPIC_B "imx500/messages"
+#define MQTT_TOPIC_A "serverai/result"
+#define MQTT_TOPIC_B "communication/messages"
 
 /////////////////////////////
 //    VARIABILI GLOBALI    //

@@ -5,10 +5,19 @@
 #include <freertos/queue.h>
 
 // Pin seriale
-#define RXp1 21
+#define RXp1 0
 
-// Frequenza LoRa
-#define RF_FREQUENCY 915000000
+// Impostazioni LoRa
+#define RF_FREQUENCY                                433000000 // Hz
+#define TX_OUTPUT_POWER                             5        // dBm
+#define LORA_BANDWIDTH                              0         // [0: 125 kHz, 1: 250 kHz, 2: 500 kHz, 3: Reserved]
+#define LORA_SPREADING_FACTOR                       7         // [SF7..SF12]
+#define LORA_CODINGRATE                             1         // [1: 4/5, 2: 4/6, 3: 4/7, 4: 4/8]
+#define LORA_PREAMBLE_LENGTH                        8         // Same for Tx and Rx
+#define LORA_SYMBOL_TIMEOUT                         0         // Symbols
+#define LORA_FIX_LENGTH_PAYLOAD_ON                  false
+#define LORA_IQ_INVERSION_ON                        false
+#define RX_TIMEOUT_VALUE                            1000
 
 ////////////////////
 //    COSTANTI    //
@@ -25,6 +34,8 @@ const char machine_code[] = "12345677ABC";
 QueueHandle_t coda = xQueueCreate(10, sizeof(char[DIMENSIONE_MASSIMA_MESSAGGIO]));
 
 TaskHandle_t ComunicazioneSeriale, ComunicazioneLoRa;
+
+static RadioEvents_t RadioEvents;
 
 
 //////////////
@@ -69,6 +80,7 @@ void setupLora(){
   Serial.println("[LORA SETUP] Inizializzazione modulo LoRa...");
 
   Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
+  Radio.Init( &RadioEvents );
 
   Serial.println("[LORA SETUP] Modulo LoRa inizializzato");
 
@@ -76,7 +88,10 @@ void setupLora(){
 
   Serial.println("[LORA SETUP] Settaggio in corso...");
 
-  Radio.SetTxConfig(MODEM_LORA, 5, 0, 0, 7, 1, 8, false, true, 0, 0, false, 3000);
+  Radio.SetTxConfig( MODEM_LORA, TX_OUTPUT_POWER, 0, LORA_BANDWIDTH,
+                                   LORA_SPREADING_FACTOR, LORA_CODINGRATE,
+                                   LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
+                                   true, 0, 0, LORA_IQ_INVERSION_ON, 3000 );
 
   Serial.println("[LORA SETUP] Settaggio completato");
 
@@ -149,7 +164,8 @@ bool riceviDatiSeriale(char* destinationBuffer, size_t max_len) {
 
 void inviaMessaggioLora(char* messaggio){
 
-  Radio.Send((uint8_t *)messaggio, sizeof(messaggio));
+  Radio.Send((uint8_t *)messaggio, strlen(messaggio));
+  Radio.IrqProcess();
 
   Serial.printf("[LORA] Messaggio inviato tramite LoRa: %s\n", messaggio);
 

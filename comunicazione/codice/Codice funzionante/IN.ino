@@ -5,10 +5,19 @@
 #include <freertos/queue.h>
 
 // Pin seriale
-#define TXp1 22
+#define TXp1 2
 
 // Frequenza LoRa
-#define RF_FREQUENCY 915000000
+#define RF_FREQUENCY                                433000000 // Hz
+#define TX_OUTPUT_POWER                             14        // dBm
+#define LORA_BANDWIDTH                              0         // [0: 125 kHz, 1: 250 kHz, 2: 500 kHz, 3: Reserved]
+#define LORA_SPREADING_FACTOR                       7         // [SF7..SF12]
+#define LORA_CODINGRATE                             1         // [1: 4/5, 2: 4/6, 3: 4/7, 4: 4/8]
+#define LORA_PREAMBLE_LENGTH                        8         // Same for Tx and Rx
+#define LORA_SYMBOL_TIMEOUT                         0         // Symbols
+#define LORA_FIX_LENGTH_PAYLOAD_ON                  false
+#define LORA_IQ_INVERSION_ON                        false
+#define RX_TIMEOUT_VALUE                            1000
 
 ////////////////////
 //    COSTANTI    //
@@ -25,7 +34,8 @@ QueueHandle_t coda = xQueueCreate(10, sizeof(char[DIMENSIONE_MASSIMA_MESSAGGIO])
 
 TaskHandle_t ComunicazioneLoRa, ComunicazioneSeriale;
 
-RadioEvents_t RadioEvents;
+static RadioEvents_t RadioEvents;
+void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr );
 
 char loraMessage[DIMENSIONE_MASSIMA_MESSAGGIO];
 
@@ -70,16 +80,12 @@ void setupLora(){
   Serial.println("[LORA SETUP] Inizializzazione modulo LoRa...");
 
   Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
+  RadioEvents.RxDone = OnRxDone;
+  Radio.Init( &RadioEvents );
 
   Serial.println("[LORA SETUP] Modulo LoRa inizializzato");
 
   delay(100);
-
-  Serial.println("[LORA SETUP] Settaggio in corso...");
-
-  Radio.SetTxConfig(MODEM_LORA, 5, 0, 0, 7, 1, 8, false, true, 0, 0, false, 3000);
-
-  Serial.println("[LORA SETUP] Settaggio completato");
 
   Serial.println("[LORA SETUP] Settaggio frequenza in corso...");
 
@@ -87,12 +93,16 @@ void setupLora(){
 
   Serial.println("[LORA SETUP] Frequenza settata");
 
-  Serial.println("[LORA SETUP] Settaggio eventi...");
+  Serial.println("[LORA SETUP] Settaggio parametri in corso...");
 
-  RadioEvents.RxDone = onRxDone; 
-  Radio.Init(&RadioEvents);
+  Radio.SetRxConfig( MODEM_LORA, LORA_BANDWIDTH, LORA_SPREADING_FACTOR,
+                                   LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
+                                   LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
+                                   0, true, 0, 0, LORA_IQ_INVERSION_ON, true );
 
-  Serial.println("[LORA SETUP] Eventi settati");
+  Serial.println("[LORA SETUP] Settaggio parametri completato");
+
+  Radio.Rx(0);
 
   Serial.println("[LORA SETUP] Modulo LoRa inizializzato");
   Serial.println("[LORA SETUP] Setup LoRa completato\n");
@@ -121,34 +131,25 @@ void setupTasks(){
 //  FUNZIONI  //
 ////////////////
 
-void onRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr) {
-  
-  memcpy(loraMessage, payload, size); 
-  
+void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
+{
+  int rxSize=size;
+
+  memcpy(loraMessage, payload, size );
+  loraMessage[rxSize]='\0';
+
+  Radio.Rx(0);
+
 }
 
 bool riceviDatiLora(char* buffer, size_t max_len) {
-
-  char messaggio[max_len];
-
-  bool inRicezione = false;
-  
-  if(!inRicezione) {
-    Radio.Rx(0);      
-    inRicezione = true;
-  }
-  
-  Radio.IrqProcess();
   
   if(String(loraMessage).length() > 1) {
 
-    strcpy(messaggio, loraMessage);
+    strcpy(buffer, loraMessage);
 
-    messaggio[sizeof(loraMessage)] = '\0';
-
-    strcpy(buffer, messaggio);
+    memset(loraMessage, 0, DIMENSIONE_MASSIMA_MESSAGGIO);
     
-    inRicezione = false;
     return true;
 
   }
@@ -192,6 +193,8 @@ void comunicazioneLoRa(void* parameter) {
 
       scriviMessaggioCoda(bufferMessaggi);
 
+      Serial.printf("[LORA] Scritto alla coda: %s\n", bufferMessaggi);
+
     }
     vTaskDelay(5 / portTICK_PERIOD_MS);
 
@@ -210,7 +213,9 @@ void comunicazioneSeriale(void* parameter) {
       strcpy(bufferMessaggi, messaggio.c_str());
       bufferMessaggi[messaggio.length()] = '\0';
 
-      Serial1.println(bufferMessaggi);
+      Serial1.println(String(bufferMessaggi));
+
+      Serial.printf("[SERIAL] Messaggio inviato in seriale: %s\n", bufferMessaggi);
     }
     vTaskDelay(5 / portTICK_PERIOD_MS);
 
@@ -220,6 +225,8 @@ void comunicazioneSeriale(void* parameter) {
 
 void loop() {
 
+  Radio.IrqProcess();
+
   static uint32_t last = 0;
 
   if (millis() - last > 30000) {
@@ -228,6 +235,6 @@ void loop() {
 
     last = millis();
   }
-  delay(100);
+  delay(10);
 
 }
