@@ -38,7 +38,7 @@ services:
       - ./volumes/model:/app/model
     command:
       - --result-topic
-      - resoults/resoult
+      - serverai/result
       - --model
       - /app/model/moondream-2b-int8.mf
       - --status-broker
@@ -104,12 +104,13 @@ services:
       - --threshold
       - "0.4"
       - --max-boxes
-      - "0"
+      - "1"
       - --classes
-      - "0"
+      - "76"
       - --iou-threshold
       - "0.5"
-      # - --save-images
-      # - true
+      - --save-images
       - --loglevel
       - INFO
+      - --status-topic
+      - serverai/status
