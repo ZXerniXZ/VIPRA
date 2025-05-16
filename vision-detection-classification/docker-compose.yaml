@@ -1,0 +1,116 @@
+version: "3.9"
+
+services:
+  # ─────────── Ollama (LLM server) ───────────
+  ollama:
+    image: ollama/ollama:latest
+    platform: linux/arm64
+    ports:
+      - "11435:11434"
+    volumes:
+      - ./volumes/ollama/ollama_data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────── FastAPI + Moondream ───────────
+  serverai:
+    build:
+      context: .
+      dockerfile: serverAI/Dockerfile
+    platform: linux/arm64
+    mem_limit: 5g
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    ports:
+      - "8002:8000"
+    restart: unless-stopped
+    volumes:
+      - ./volumes/model:/app/model
+    command:
+      - --result-topic
+      - serverai/result
+      - --model
+      - /app/model/moondream-2b-int8.mf
+      - --status-broker
+      - mosquitto        # o l’hostname del tuo broker
+      - --status-port
+      - "1883"
+      - --status-topic
+      - serverai/status
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
+  # ─────────── Mosquitto (MQTT broker) ───────────
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    restart: unless-stopped
+    volumes:
+      - ./volumes/mosquitto/config:/mosquitto/config
+      - ./volumes/mosquitto/data:/mosquitto/data
+      - ./volumes/mosquitto/log:/mosquitto/log
+    stdin_open: true
+    tty: true
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 1883"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 10s
+
+  # ─────────── IMX500 AI Camera publisher ───────────
+  imx500:
+    build:
+      context: .
+      dockerfile: imx500/Dockerfile
+    image: imx500
+    platform: linux/arm64
+    privileged: true
+    network_mode: host
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./volumes/imx500-captures:/app/captures
+      - /run/udev:/run/udev:ro
+      - /lib/firmware:/lib/firmware:ro
+      - /sys/kernel/debug:/sys/kernel/debug:ro
+      - /dev/dma_heap:/dev/dma_heap:ro
+    # ENTRYPOINT è definito nel Dockerfile; qui passiamo gli argomenti allo script
+    command:
+      - --model
+      - /usr/share/imx500-models/imx500_network_efficientdet_lite0_pp.rpk
+      - --broker
+      - localhost
+      - --topic
+      - ai/camera
+      - --savedir
+      - /app/captures
+      - --threshold
+      - "0.4"
+      - --max-boxes
+      - "1"
+      - --classes
+      - "76"
+      - --iou-threshold
+      - "0.5"
+      - --save-images
+      - --loglevel
+      - INFO
+      - --status-topic
+      - serverai/status

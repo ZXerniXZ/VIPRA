@@ -1,0 +1,14 @@
+# Runtime volumes (ricreati a ogni avvio)
+vision-detection-classification/volumes/mosquitto/data/
+vision-detection-classification/volumes/model/
+vision-detection-classification/volumes/ollama/
+# Compilatori / editor
+*.pyc
+__pycache__/
+*.log
+*.swp
+*.tmp
+
+# Docker artefacts
+*.env
+*.pid
