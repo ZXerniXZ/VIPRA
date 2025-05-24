@@ -94,7 +94,7 @@ void setupMQTT() {
   Serial.println("[MQTT SETUP] Ping al server in corso...");
 
   while(true){
-    if (Ping.ping(IPAddress(192,168,1,100))) {
+    if (Ping.ping(IPAddress(192,168,1,101))) {
       Serial.println("[MQTT SETUP] Server raggiungibile");
 
       mqtt.subscribe(MQTT_TOPIC_A, [](const char* topic, const char* payload) {
