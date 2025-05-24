@@ -42,22 +42,23 @@ services:
       - --model
       - /app/model/moondream-2b-int8.mf
       - --status-broker
-      - mosquitto        # o l’hostname del tuo broker
+      - mosquitto
       - --status-port
-      - "1883"
+      - "9000"
       - --status-topic
       - serverai/status
       - --host
       - "0.0.0.0"
       - --port
       - "8000"
+
   # ─────────── Mosquitto (MQTT broker) ───────────
   mosquitto:
     image: eclipse-mosquitto
     container_name: mosquitto
     ports:
-      - "1883:1883"
-      - "9001:9001"
+      - "9000:9000"      # MQTT TCP
+      - "9001:9001"      # WebSocket (opzionale)
     restart: unless-stopped
     volumes:
       - ./volumes/mosquitto/config:/mosquitto/config
@@ -66,7 +67,7 @@ services:
     stdin_open: true
     tty: true
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 1883"]
+      test: ["CMD-SHELL", "nc -z localhost 9000"]
       interval: 5s
       timeout: 2s
       retries: 5
@@ -91,12 +92,13 @@ services:
       - /lib/firmware:/lib/firmware:ro
       - /sys/kernel/debug:/sys/kernel/debug:ro
       - /dev/dma_heap:/dev/dma_heap:ro
-    # ENTRYPOINT è definito nel Dockerfile; qui passiamo gli argomenti allo script
     command:
       - --model
       - /usr/share/imx500-models/imx500_network_efficientdet_lite0_pp.rpk
       - --broker
       - localhost
+      - --port
+      - "9000"          # nuova porta MQTT
       - --topic
       - ai/camera
       - --savedir
