@@ -1,212 +1,250 @@
 #include <SPI.h>
-#include <LoRa.h>
+#include "LoRaWan_APP.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/queue.h>
 
-// Pin LoRa
-#define LORA_CS 18
-#define LORA_RST 23
-#define LORA_IRQ 26
-
 // Pin seriale
-#define RXp1 21
+#define RXp1 0
 
-
+// Impostazioni LoRa
+#define RF_FREQUENCY                                433000000 // Hz
+#define TX_OUTPUT_POWER                             5        // dBm
+#define LORA_BANDWIDTH                              0         // [0: 125 kHz, 1: 250 kHz, 2: 500 kHz, 3: Reserved]
+#define LORA_SPREADING_FACTOR                       7         // [SF7..SF12]
+#define LORA_CODINGRATE                             1         // [1: 4/5, 2: 4/6, 3: 4/7, 4: 4/8]
+#define LORA_PREAMBLE_LENGTH                        8         // Same for Tx and Rx
+#define LORA_SYMBOL_TIMEOUT                         0         // Symbols
+#define LORA_FIX_LENGTH_PAYLOAD_ON                  false
+#define LORA_IQ_INVERSION_ON                        false
+#define RX_TIMEOUT_VALUE                            1000
 
 ////////////////////
-
 //    COSTANTI    //
-
 ////////////////////
 
-#define MAX_MESSAGE_LENGTH 2500 // Lunghezza massima del messaggio
+#define DIMENSIONE_MASSIMA_MESSAGGIO 2048
 
-String const machine_code = "12345677ABC"; // Codice macchina
-
+const char machine_code[] = "12345677ABC"; 
 
 /////////////////////////////
-
 //    VARIABILI GLOBALI    //
-
 /////////////////////////////
 
-
-QueueHandle_t xQueue = xQueueCreate(10, MAX_MESSAGE_LENGTH * sizeof(char)); // Coda per i messaggi ricevuti da Serial1
+QueueHandle_t coda = xQueueCreate(10, sizeof(char[DIMENSIONE_MASSIMA_MESSAGGIO]));
 
 TaskHandle_t ComunicazioneSeriale, ComunicazioneLoRa;
 
+static RadioEvents_t RadioEvents;
+
 
 //////////////
-
 //  SETUP  //
-
 /////////////
 
 
 void setup() {
-  
-  serialSetup();
 
-  loraSetup();
-
-  tasksSetup();
-
-  Serial.println("Setup done");
-
-}
-
-
-//////////////////////
-
-//  FUNZIONI SETUP  //
-
-//////////////////////
-
-
-void serialSetup(){
-
-  Serial.setTimeout(100);  
-  Serial1.setTimeout(100);
-
+  delay(100);
+  Serial.setTimeout(10); 
   Serial.begin(38400);
-  Serial1.begin(115200, SERIAL_8N1, RXp1, -1);
+  
+  setupSeriale();
+  setupLora();
+  setupTasks();
+  Serial.println("[SYSTEM] Setup completato\n");
 
-  Serial.println("\nSerial setup done");
 }
 
-void loraSetup(){
 
-  Serial.println("Setup lora...");
-  
-  LoRa.setTimeout(100);
-  LoRa.begin(433E6);
+//////////////////////
+//  FUNZIONI SETUP  //
+//////////////////////
+
+
+void setupSeriale(){
+
+  Serial.println("\n[SERIAL SETUP] Inizializzazione porte seriali...");
+
+  Serial1.setTimeout(10);
+  Serial1.begin(74880, SERIAL_8N1, RXp1, -1);
+
+  Serial.println("[SERIAL SETUP] Porte seriali inizializzate");
+
+  Serial.println("[SERIAL SETUP] Setup seriale completato\n");
+
+}
+
+void setupLora(){
+
+  Serial.println("[LORA SETUP] Inizializzazione modulo LoRa...");
+
+  Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
+  Radio.Init( &RadioEvents );
+
+  Serial.println("[LORA SETUP] Modulo LoRa inizializzato");
 
   delay(100);
 
-  LoRa.setPins(LORA_CS, LORA_RST, LORA_IRQ);
+  Serial.println("[LORA SETUP] Settaggio in corso...");
 
-  if (!LoRa.begin(433E6)) {
-    Serial.println("Error: LoRa module not find! Restarting ESP32..");
-    ESP.restart();
-  } else {
-    Serial.println("LoRa initialized successfully!");
-  }
+  Radio.SetTxConfig( MODEM_LORA, TX_OUTPUT_POWER, 0, LORA_BANDWIDTH,
+                                   LORA_SPREADING_FACTOR, LORA_CODINGRATE,
+                                   LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
+                                   true, 0, 0, LORA_IQ_INVERSION_ON, 3000 );
 
-  Serial.println("Lora setup done");
+  Serial.println("[LORA SETUP] Settaggio completato");
+
+  Serial.println("[LORA SETUP] Settaggio frequenza in corso...");
+
+  Radio.SetChannel(RF_FREQUENCY);
+
+  Serial.println("[LORA SETUP] Frequenza settata");
+
+  Serial.println("[LORA SETUP] Modulo LoRa inizializzato");
+  Serial.println("[LORA SETUP] Setup LoRa completato\n");
+  
 
 }
 
-void tasksSetup(){
+void setupTasks(){
 
-  Serial.println("Creating tasks...");
-
-  xTaskCreatePinnedToCore(
-    comunicazioneSeriale, // Nome funzione
-    "ComunicazioneSeriale", // Nome task
-    10240, // Dimensione stack
-    NULL,  // Parametri
-    1,  // Priorità più alta per la ricezione seriale
-    &ComunicazioneSeriale,  // Task handle
-    0)  // Core
-  ;  
+  Serial.println("[RTOS SETUP] Creazione tasks...");
 
   xTaskCreatePinnedToCore(
-    comunicazioneLoRa, // Nome funzione
-    "ComunicazioneLoRa", // Nome task
-    10240, // Dimensione stack
-    NULL,  // Parametri
-    2,  // Priorità
-    &ComunicazioneLoRa,  // Task handle
-    1)  // Core
-  ;  
+    comunicazioneSeriale, "ComunicazioneSeriale", 12288, NULL, 2, &ComunicazioneSeriale, 0)
+  ;
 
-  Serial.println("Tasks created succesfully");
+  xTaskCreatePinnedToCore(
+    comunicazioneLoRa, "ComunicazioneLoRa", 12288, NULL, 1, &ComunicazioneLoRa, 1)
+  ;
+
+  Serial.println("[RTOS SETUP] Task creati");
+  Serial.println("[RTOS SETUP] Setup tasks completato\n");
 
 }
 
 
 ////////////////
-
 //  FUNZIONI  //
-
 ////////////////
 
+bool riceviDatiSeriale(char* destinationBuffer, size_t max_len) {
 
-
-String receiveStringSerial1() {
-
+  int dimensioneMessaggio = 0;
+    
   if(Serial1.available()){
 
-    char buffer[MAX_MESSAGE_LENGTH]={0};
+    char bufferMessaggi[max_len];
 
-    int len = Serial1.readBytesUntil('\n', buffer, MAX_MESSAGE_LENGTH - 1);
-    buffer[len-1] = '\0';
+    while (Serial1.available()) {
 
-    return String(buffer);
+      char carattereCorrente = Serial1.read();
 
-  }else{
-    return "";
-  }
+      bufferMessaggi[dimensioneMessaggio++] = carattereCorrente; 
+
+      if (dimensioneMessaggio >= max_len - 1) {
+
+        Serial.println("[SERIAL] ERR: Messaggio troppo lungo");
+        memset(bufferMessaggi, 0, max_len);
+
+        return false;
+      }
+
+    }
+
+    bufferMessaggi[dimensioneMessaggio -1] = '\0';
+
+    strcpy(destinationBuffer, bufferMessaggi);
+
+    return true;
+
+  }else return false;
+}
+
+void inviaMessaggioLora(char* messaggio){
+
+  Radio.Send((uint8_t *)messaggio, strlen(messaggio));
+  Radio.IrqProcess();
+
+  Serial.printf("[LORA] Messaggio inviato tramite LoRa: %s\n", messaggio);
 
 }
 
-void loraSendString(String messaggio) {
-  LoRa.beginPacket();
-  LoRa.print(messaggio);
-  LoRa.endPacket();
+bool scriviMessaggioCoda(char* messaggio) {
+
+  if (xQueueSend(coda, messaggio, pdMS_TO_TICKS(50)) != pdTRUE) {
+
+    Serial.println("[QUEUE] Coda piena");
+    return false;
+  } else return true;
 }
 
+String leggiMessaggioCoda() {
+
+  char bufferMessaggi[DIMENSIONE_MASSIMA_MESSAGGIO];
+
+  if (xQueueReceive(coda, bufferMessaggi, pdMS_TO_TICKS(50)) == pdTRUE) {
+    
+    return String(bufferMessaggi);
+    
+  } else return "";
+}
 
 ////////////////
-
 //   TASKS    //
-
 ////////////////
 
 
 void comunicazioneSeriale(void * parameter) {
+
+  char bufferMessaggi[DIMENSIONE_MASSIMA_MESSAGGIO];
+  
   for(;;) {
-    
-    String nuovoMessaggio = receiveStringSerial1();
 
-    if (nuovoMessaggio.length() >= 1) {
-      // Invia il messaggio alla coda
+    if (riceviDatiSeriale(bufferMessaggi, sizeof(bufferMessaggi))) {
 
-      if (xQueueSend(xQueue, &nuovoMessaggio, portMAX_DELAY) != pdTRUE) {
-        Serial.println("[Seriale] Errore: coda piena!");
-      }else{
-        Serial.printf("Messaggio inviato alla coda: ", nuovoMessaggio);
-      }
+      Serial.printf("[SERIAL] Ricevuto: %s\n", bufferMessaggi);
+
+      scriviMessaggioCoda(bufferMessaggi);
+      
     }
-
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelay(5 / portTICK_PERIOD_MS);
   }
+
 }
 
 
 void comunicazioneLoRa(void * parameter) {
-  
-  char messaggioDaInviare[MAX_MESSAGE_LENGTH]={0};
+
+  char bufferMessaggi[DIMENSIONE_MASSIMA_MESSAGGIO];
 
   for(;;) {
+    String messaggio = leggiMessaggioCoda();
+    
+    if(messaggio.length() > 1) {
 
-    // Ricevi il messaggio dalla coda
-    if (xQueueReceive(xQueue, &messaggioDaInviare, portMAX_DELAY) == pdTRUE) {
+      strcpy(bufferMessaggi, messaggio.c_str());
+      bufferMessaggi[messaggio.length()] = '\0';
 
-      Serial.printf("\n[LoRa] Messaggio ricevuto dalla coda: %s\n", messaggioDaInviare);
-
-      // Invia il messaggio via LoRa
-      String messaggio = machine_code + String(messaggioDaInviare);
-      loraSendString(messaggio);
-      Serial.println("[LoRa] Messaggio inviato via LoRa: " + messaggio);
+      inviaMessaggioLora(bufferMessaggi);
 
     }
-
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelay(5 / portTICK_PERIOD_MS);
   }
 }
 
 
+void loop() {
 
-void loop() {}
+  static uint32_t last = 0;
+
+  if (millis() - last > 30000) {
+
+    Serial.printf("[SYS] Heap: %d | Min: %d\n", ESP.getFreeHeap(), esp_get_minimum_free_heap_size());
+
+    last = millis();
+  }
+  delay(100);
+
+}
