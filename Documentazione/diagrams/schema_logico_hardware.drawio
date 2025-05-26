@@ -1,10 +1,10 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36" version="24.8.4">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0" version="27.0.9">
   <diagram name="Page-1" id="gtM-KBbGRNITbYT8aGW2">
-    <mxGraphModel dx="989" dy="509" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1360" dy="795" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="Jx2BlyM2KirhIQBwAuTQ-1" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;Modulo &lt;br&gt;&lt;/font&gt;&lt;h1 style=&quot;font-size: 24px;&quot; class=&quot;product-summary-name-without-seo Product-Summary-Name ng-star-inserted&quot;&gt;&lt;font style=&quot;font-size: 24px;&quot;&gt;&lt;span class=&quot;product-summary-name--Original&quot;&gt; NVIDIA Jetson Orin Nano Developer Kit&lt;/span&gt;&lt;/font&gt;&lt;/h1&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
+        <mxCell id="Jx2BlyM2KirhIQBwAuTQ-1" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;vision detection &amp;amp; classification &lt;br&gt;&lt;/font&gt;&lt;h1 style=&quot;font-size: 24px;&quot; class=&quot;product-summary-name-without-seo Product-Summary-Name ng-star-inserted&quot;&gt;&lt;font style=&quot;font-size: 24px;&quot;&gt;&lt;span class=&quot;product-summary-name--Original&quot;&gt;raspberry pi 5 8gb&lt;/span&gt;&lt;/font&gt;&lt;/h1&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
           <mxGeometry x="110" y="140" width="180" height="180" as="geometry" />
         </mxCell>
         <mxCell id="Jx2BlyM2KirhIQBwAuTQ-2" value="" style="whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
@@ -66,7 +66,7 @@
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="Jx2BlyM2KirhIQBwAuTQ-16" value="Ardu Cam" style="whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
+        <mxCell id="Jx2BlyM2KirhIQBwAuTQ-16" value="rpi ai cam (imx500)" style="whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
           <mxGeometry x="160" y="400" width="80" height="80" as="geometry" />
         </mxCell>
         <mxCell id="Jx2BlyM2KirhIQBwAuTQ-17" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="Jx2BlyM2KirhIQBwAuTQ-16" target="Jx2BlyM2KirhIQBwAuTQ-1" edge="1">
