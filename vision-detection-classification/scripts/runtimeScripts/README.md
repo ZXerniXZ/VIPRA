@@ -1,10 +1,19 @@
+
+# credenziali standard prototipo
+
+username: p1-001<br>	
+	-p = prototipo<br>	
+ 	-1 = prototipo 1<br>	
+  	-001 = numero univoco di prototipo<br>	
+password: RoadVision<br>	
+
 # pair device with github via ssh
 
 **eseguire le seguenti istruzioni sulla raspberry**
 
 attivare ssh:
 
-    $ sudo rasp-config
+    $ sudo raspi-config
     
    interface option **>** ssh **>** yes
    
