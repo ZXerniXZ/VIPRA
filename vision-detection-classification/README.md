@@ -21,14 +21,32 @@ This module runs real‑time **object detection** and **image classification** e
 
 ```bash
 # Official installation script
-aeval $(curl -fsSL https://get.docker.com)
 
-# Add the current user to the docker group and refresh credentials
-sudo usermod -aG docker "$USER"
-newgrp docker  # reload group without reboot
-
-# Install the Compose plugin
-sudo apt-get install -y docker-compose-plugin
+sudo apt install -y \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg \
+  | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://downlsudo apt update
+sudo apt install -y \
+    docker-ce \
+    docker-ce-cli \
+    containerd.io \
+    docker-buildx-plugin \
+    docker-compose-plugin   # <-- Compose v2
+oad.docker.com/linux/debian \
+  $(lsb_release -cs) stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo systemctl enable dosudo usermod -aG docker $USER
+# logout / login (o: newgrp docker)
+docker run hello-world
+cker --now
 ```
 ---
 
@@ -36,6 +54,10 @@ sudo apt-get install -y docker-compose-plugin
 ## 2 · Install necessary dependency
 
 ```bash
+#apt update
+sudo apt update
+#installing git
+sudo apt install git
 # imx-500 dependency for cam compatibility
 sudo apt install imx500-all
 ```
