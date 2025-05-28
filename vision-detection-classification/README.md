@@ -1,7 +1,7 @@
 # VIPRA Vision – Object Detection & Classification (Docker Edition)
 
 > **Branch:** `prototipo2/vision-detection-classification`
-> **Hardware target:** Raspberry Pi 4 B / Pi 3 B + (64‑bit Raspberry Pi OS Bookworm)
+> **Hardware target:** Raspberry Pi  5 8gb(64‑bit Raspberry Pi OS Bookworm)
 
 This module runs real‑time **object detection** and **image classification** entirely inside a **Docker container**—no more native install scripts. Follow the steps below to deploy it on a Raspberry Pi.
 
@@ -30,120 +30,45 @@ newgrp docker  # reload group without reboot
 # Install the Compose plugin
 sudo apt-get install -y docker-compose-plugin
 ```
+---
+
+
+## 2 · Install necessary dependency
+
+```bash
+# imx-500 dependency for cam compatibility
+sudo apt install imx500-all
+```
 
 ---
 
-## 2 · Clone the latest release (tag)
+## 3 · Clone the latest release (tag)
 
 ```bash
 git clone https://github.com/ZXerniXZ/VIPRA.git --branch latest_tag_here  #ex v0.1.08
 cd VIPRA/vision-detection-classification
 ```
-
-
-da finire da qui in giù
-
-
 ---
 
-## 3 · Build or pull the Docker image
+## 4 · Docker Compose 
 
-### 3.1 Build locally
-
-> **Time required:** \~ 5–7 min on a Pi 5.
+A ready‑made `docker-compose.yml` is included. Start and build the service in the background:
 
 ```bash
-docker compose build -t vipra-vision:latest .
-```
-
-### 3.2 Pull a pre‑built image (if published)
-
-```bash
-docker pull ghcr.io/zxernixz/vipra-vision:latest
+cd VIPRA/vision-detection-classification
+docker compose up -d --build
 ```
 
 ---
 
-## 4 · Run a single container
+## 5 · Set up container with external resources
 
-```bash
-docker run -it --rm \
-  --name vipra-vision \
-  --device /dev/video0:/dev/video0 \
-  -v "$(pwd)/config:/app/config:ro" \
-  -v /etc/localtime:/etc/localtime:ro \
-  -e IMG_SIZE=640 \   # optional environment variable
-  vipra-vision:latest
-```
-
-| Option                       | Purpose                                                 |
-| ---------------------------- | ------------------------------------------------------- |
-| `--device /dev/video0`       | Pass the camera device into the container               |
-| `-v ./config:/app/config:ro` | Provide custom configuration files (labels, YAML, etc.) |
-| `-e IMG_SIZE=640`            | Override the YOLO input size                            |
-| `--rm`                       | Remove the container when it exits                      |
-
-If you want an OpenCV preview window on a **Pi 4 with the VC4 GPU**, add `--device /dev/vchiq` and `--privileged`.
+modello moondream https://drive.google.com/drive/folders/1vvD3g_ZfrhedtCNqnTiiuytrxVO7Xpwj?usp=sharing
+container ollama con gemma3:1b
 
 ---
 
-## 5 · Docker Compose (recommended)
-
-A ready‑made `docker-compose.yml` is included. Start the service in the background:
-
-```bash
-docker compose up -d
-```
-
-<details>
-<summary><strong>Example <code>docker-compose.yml</code></strong></summary>
-
-```yaml
-version: "3.9"
-services:
-  vision:
-    build: .  # or: image: ghcr.io/zxernixz/vipra-vision:latest
-    container_name: vipra-vision
-    restart: unless-stopped
-    devices:
-      - /dev/video0:/dev/video0
-    volumes:
-      - ./config:/app/config:ro
-    environment:
-      - IMG_SIZE=640
-      - DISPLAY=0
-```
-
-</details>
-
-### 5.1 Update to the latest image
-
-```bash
-git pull                         # fetch new commits
-docker compose build --pull      # rebuild with the latest base image
-docker compose up -d             # restart the container
-```
-
-### 5.2 Tail the logs
-
-```bash
-docker compose logs -f
-```
-
----
-
-## 6 · Environment variables
-
-| Variable      | Default   | Description                                          |
-| ------------- | --------- | ---------------------------------------------------- |
-| `IMG_SIZE`    | `640`     | Input resolution for YOLO                            |
-| `DISPLAY`     | `0`       | Set to `1` to show an OpenCV preview window (debug)  |
-| `SAVE_FRAMES` | `0`       | Set to `1` to save processed frames in `/app/output` |
-| `RTSP_OUT`    | *(empty)* | Publish an RTSP stream on the specified port if set  |
-
----
-
-## 7 · Directory layout
+## 6 · Directory layout
 
 ```text
 vision-detection-classification/
@@ -163,7 +88,7 @@ vision-detection-classification/
 
 ---
 
-## 8 · Troubleshooting
+## 7 · Troubleshooting
 
 | Problem                                    | Possible solution                                                         |
 | ------------------------------------------ | ------------------------------------------------------------------------- |
@@ -175,7 +100,7 @@ vision-detection-classification/
 
 ---
 
-## 9 · Contributing
+## 8 · Contributing
 
 1. Fork the repo and create a branch named `feature/<topic>`.
 2. Make sure `docker compose test` (unit + integration) passes locally.
@@ -183,7 +108,7 @@ vision-detection-classification/
 
 ---
 
-## 10 · License
+## 9 · License
 
 Released under the **MIT License**. See the `LICENSE` file for details.
 
