@@ -1,8 +1,14 @@
 version: "3.9"
 
+#this docker compose file is used to remake the build of every single container, for use this version, please delete "-dev_version" frome the file name, and use ONLY this file for 
+#the build and push process for question about usage, please refer to @ZXerniXZ on the public repo
+
 services:
   # ─────────── Ollama (LLM server) ───────────
   ollama:
+    build:
+      context: .                # radice del progetto (o ./ollama)
+      dockerfile: ollama/Dockerfile
     image: zxernixz7/ollama-vipra   # tag che pubblicherai
     platform: linux/arm64
     ports:
@@ -19,6 +25,9 @@ services:
 
   # ─────────── FastAPI + Moondream ───────────
   serverai:
+    build:
+      context: .
+      dockerfile: serverAI/Dockerfile
     image: zxernixz7/serverai-vipra   # ← nome/tag dell’immagine finale
     platform: linux/arm64
     mem_limit: 5g
@@ -73,6 +82,9 @@ services:
 
   # ─────────── IMX500 AI Camera publisher ───────────
   imx500:
+    build:
+      context: .
+      dockerfile: imx500/Dockerfile
     image: zxernixz7/imx500-vipra
     platform: linux/arm64
     privileged: true
