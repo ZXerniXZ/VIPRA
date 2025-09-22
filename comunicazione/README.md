@@ -1,4 +1,5 @@
-## in questo file si trova la lista delle schede elettroniche utilizzate, la loro funzione e il link della pagina del produttore/datasheet.
+## This file contains a list of the electronic boards used, their functions, and a link to the manufacturer's page/datasheet.
+
 IA
  - 1x [Jetson Orin Nano Developer Kit Getting Started Guide](https://developer.nvidia.com/embedded/learn/get-started-jetson-orin-nano-devkit)
  - 1x [Arducam 12MP 477P Autofocus High Quality Camera ](https://www.arducam.com/product/arducam-12mp-imx477-motorized-focus-high-quality-camera-for-raspberry-pi/)(indicativo, da discutere)
