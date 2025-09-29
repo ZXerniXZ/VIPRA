@@ -1,4 +1,4 @@
-Divisione gruppi
+Divisione gruppo
 
 Navoni, Biestro: VDC (Vision Detection Classification);
 Patti, Natan: Comunicazione;
