@@ -1,5 +1,5 @@
 Divisione gruppi
 
-Navoni, Biestro: Parte AI;
+Navoni, Biestro: VDC (Vision Detection Classification);
 Patti, Natan: Comunicazione;
 Dilecce: Redazione.
