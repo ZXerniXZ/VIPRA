@@ -2,6 +2,15 @@
 vision-detection-classification/volumes/mosquitto/data/
 vision-detection-classification/volumes/model/
 vision-detection-classification/volumes/ollama/
+vision-detection-classification/volumes/imx500-captures/
+
+# Python virtual environments
+venv/
+env/
+ENV/
+.venv/
+vision-detection-classification/serverAI/venv/
+
 # Compilatori / editor
 *.pyc
 __pycache__/
